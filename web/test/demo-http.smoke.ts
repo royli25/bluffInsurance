@@ -130,7 +130,7 @@ async function main() {
     const draft = await (
       await fetch(origin + `/demo/checkout?event=${eventId}`)
     ).text();
-    assert.ok(draft.includes("Protection is not published yet") || draft.includes("Pricing by"), draft.slice(0, 500) + output);
+    assert.ok(draft.includes("Protection is not published yet") || draft.includes("Confirm order"), draft.slice(0, 500) + output);
     assert.equal((await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty })).status, 400, "unpublished protection cannot be quoted");
     assert.equal((await post("/api/policies", order)).status, 400);
     assert.equal(
