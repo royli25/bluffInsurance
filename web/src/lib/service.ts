@@ -22,7 +22,7 @@ import {
   type Coverage,
   type CoverageId,
 } from "./coverage";
-import { db, type OfferConfig, type Policy } from "./store";
+import { db, UNSAVED_OFFER_VERSION, type OfferConfig, type Policy } from "./store";
 import { validateCheckoutQuote, type CheckoutQuote } from "./checkout-quote";
 import type { GEvent } from "./gemini/types";
 
@@ -44,7 +44,7 @@ export function defaultOffer(eventId: string, covs: Coverage[]): OfferConfig {
     coverages: Object.fromEntries(
       covs.map((c) => [c.id, { enabled: true, refundPct: c.defaultRefundPct }]),
     ),
-    updatedAt: new Date().toISOString(),
+    updatedAt: UNSAVED_OFFER_VERSION,
   };
 }
 

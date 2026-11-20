@@ -53,6 +53,8 @@ export interface Policy {
   /** Derived from the canonical event journal on every read, never trusted from a local write. */
   chain?: ChainProof;
 }
+/** Version of an event's offer before it has ever been saved. Unsaved defaults carry it so the first save passes the version check. */
+export const UNSAVED_OFFER_VERSION = new Date(0).toISOString();
 export interface OfferConfig {
   eventId: string;
   published: boolean;
@@ -511,7 +513,7 @@ export function openStore(file: string, legacyFile?: string) {
       let saved = o;
       mutate((d) => {
         const previous = d.offers[o.eventId];
-        if (expectedUpdatedAt !== undefined && previous?.updatedAt !== expectedUpdatedAt)
+        if (expectedUpdatedAt !== undefined && (previous?.updatedAt ?? UNSAVED_OFFER_VERSION) !== expectedUpdatedAt)
           throw new Error("Protection changed elsewhere. Refresh before saving.");
         const timestamp = Math.max(Date.parse(o.updatedAt), previous ? Date.parse(previous.updatedAt) + 1 : 0);
         saved = { ...o, updatedAt: new Date(timestamp).toISOString() };
