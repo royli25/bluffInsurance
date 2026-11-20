@@ -148,12 +148,7 @@
 
 /* Selection is carried by tonal fill and the radio control. */
 .tier.selectedTier, .protection.protectionSelected, .protection.noProtectionSelected { background: #e4edff; }
-.pricingProvider { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-left: auto; color: #727782; font-size: 11px; font-weight: 400; }
 .sectionTitle { flex-wrap: wrap; }
-.quoteStatus { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; color: #727782; font-size: 11px; font-variant-numeric: tabular-nums; }
-.quoteStatus > span { display: inline-flex; align-items: center; gap: 7px; }
-.connectionDot { width: 5px; height: 5px; border-radius: 50%; background: #a3a9b2; }
-.liveDot { background: #268456; }
 .providerRow { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; }
 .providerRow > span { color: #727782; font-size: 11px; }
 .footerBrand { color: #121212; font-size: 20px; letter-spacing: -.04em; font-weight: 600; }
@@ -162,6 +157,14 @@
 .refreshPrices { min-height: 40px; margin-top: 8px; border: 0; background: transparent; color: #024ddf; font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
 @keyframes quotePulse { to { opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .priceSkeleton { animation: none; } }
-@media (max-width: 680px) { .pricingProvider { gap: 8px; } .providerRow { gap: 18px; } .footer { gap: 24px; } }
+@media (max-width: 680px) { .providerRow { gap: 18px; } .footer { gap: 24px; } }
 
 .backLink { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; color: inherit; text-decoration: none; font-size: 12px; }
+
+.quoteChip { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; min-width: 130px; padding: 7px 11px; border-radius: 5px; font-size: 11px; line-height: 16px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.quoteCurrent { color: #17633f; background: #e6f4ec; }
+.quoteExpiring { color: #865207; background: #fff1d6; }
+.quoteUpdating { color: #024ddf; background: #e9efff; }
+.quoteUnavailable { color: #9a3412; background: #fff0e8; }
+.protectionCopy > .protectionProvider { display: flex; align-items: center; gap: 7px; margin-top: 4px; color: #757b85; font-size: 10px; }
+.protectionProvider img { width: 66px; height: auto; }

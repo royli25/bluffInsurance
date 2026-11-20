@@ -36,6 +36,7 @@ export default function SimpleCheckout({
   const [priceError, setPriceError] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [now, setNow] = useState(0);
+  const lastAutoRefresh = useRef<string | null>(null);
   const matchingPrices = prices?.tierId === tier.id && prices.qty === quantity ? prices : null;
   const remaining = matchingPrices ? Math.max(0, Math.ceil((Date.parse(matchingPrices.expiresAt) - now) / 1000)) : 0;
   const ready = !!matchingPrices && !loadingPrices && !priceError;
@@ -78,6 +79,12 @@ export default function SimpleCheckout({
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+  useEffect(() => {
+    if (!matchingPrices || !ready || remaining > 0 || busy || confirmed || lastAutoRefresh.current === matchingPrices.id) return;
+    // One refresh per expired quote. Failed requests show a retry instead of looping.
+    lastAutoRefresh.current = matchingPrices.id;
+    setRefresh((value) => value + 1);
+  }, [matchingPrices, ready, remaining, busy, confirmed]);
   useEffect(() => {
     if (confirmed) confirmation.current?.focus();
   }, [confirmed]);
@@ -279,7 +286,14 @@ export default function SimpleCheckout({
               <section className={styles.card}>
                 <h2 className={styles.sectionTitle}>
                   <span className={styles.step}>2</span>Protection{" "}
-                  <span className={styles.pricingProvider}>Pricing by <ProviderLogo provider="gemini" /></span>
+                  {options.length > 0 && <span
+                    className={`${styles.quoteChip} ${priceError ? styles.quoteUnavailable : loadingPrices || !matchingPrices || remaining === 0 ? styles.quoteUpdating : remaining <= 5 ? styles.quoteExpiring : styles.quoteCurrent}`}
+                    role="status"
+                    aria-live={loadingPrices || priceError ? "polite" : "off"}
+                    title={prices?.source === "estimate" ? "Estimated pricing. Prices refresh automatically when the countdown ends." : "Prices refresh automatically when the countdown ends."}
+                  >
+                    {priceError ? "Prices unavailable" : loadingPrices || !matchingPrices || remaining === 0 ? "Refreshing prices…" : `${prices?.source === "estimate" ? "Estimate · " : "Refresh in "}0:${String(remaining).padStart(2, "0")}`}
+                  </span>}
                 </h2>
                 <div className={styles.protectionOptions} aria-busy={loadingPrices}>
                   {currentOptions.map((option) => {
@@ -304,6 +318,7 @@ export default function SimpleCheckout({
                             </span>
                           </strong>
                           <span>If {option.trigger}.</span>
+                          <span className={styles.protectionProvider}>Powered by <ProviderLogo provider="gemini" /></span>
                         </span>
                         <span className={styles.protectionPrice}>
                           {amount ? `+${usd(amount.premium)}` : <span className={styles.priceSkeleton} aria-label="Fetching price" />}
@@ -329,14 +344,8 @@ export default function SimpleCheckout({
                     <span className={styles.protectionPrice}>$0</span>
                   </label>
                 </div>
-                {options.length > 0 && <div className={styles.quoteStatus}>
-                  <span aria-live={loadingPrices ? "polite" : "off"} role="status">
-                    <span className={`${styles.connectionDot} ${ready && prices?.source === "live" ? styles.liveDot : ""}`} />
-                    {loadingPrices || !matchingPrices && !priceError ? "Updating prices…" : priceError ? "Prices unavailable" : `${prices?.source === "live" ? "Live price" : "Estimated price"} · ${remaining > 0 ? `Valid for 0:${String(remaining).padStart(2, "0")}` : "Expired"}`}
-                  </span>
-                </div>}
                 {priceError && <p role="alert" className={styles.error}>{priceError}</p>}
-                {!!options.length && !loadingPrices && (priceError || remaining === 0) && <button type="button" className={styles.refreshPrices} onClick={() => setRefresh((r) => r + 1)}>Refresh prices</button>}
+                {!!options.length && !loadingPrices && priceError && <button type="button" className={styles.refreshPrices} onClick={() => setRefresh((r) => r + 1)}>Retry prices</button>}
                 {!currentOptions.length && <p role="status" className={styles.finePrint}>Protection isn’t available for this event.</p>}
               </section>
               <section className={styles.card}>
