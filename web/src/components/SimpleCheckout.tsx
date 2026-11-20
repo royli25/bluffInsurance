@@ -322,7 +322,7 @@ export default function SimpleCheckout({
                         <span className={styles.protectionPurchase}>
                           <span className={styles.protectionProvider}>
                             <span>Powered by</span>
-                            <span className={styles.geminiChip}><ProviderLogo provider="gemini" dark /></span>
+                            <span className={option.hedge.provider === "kalshi" ? styles.kalshiChip : styles.geminiChip}><ProviderLogo provider={option.hedge.provider ?? "gemini"} dark={option.hedge.provider !== "kalshi"} /></span>
                           </span>
                           <span className={styles.protectionPrice}>
                             {amount ? `+${usd(amount.premium)}` : <span className={styles.priceSkeleton} aria-label="Fetching price" />}

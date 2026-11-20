@@ -24,6 +24,7 @@ export interface GParticipant {
 }
 
 export interface GEvent {
+  status?: string;
   id: string;
   title: string;
   category: "Sports" | "Weather" | "Crypto" | string;

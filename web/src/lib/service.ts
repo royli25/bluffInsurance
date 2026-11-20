@@ -1,6 +1,8 @@
 import "server-only";
 import crypto from "node:crypto";
-import { getPricingMarkets, getMarkets } from "./gemini/client";
+import { getMarkets } from "./gemini/client";
+import { scanCoverageMarkets } from "./markets/scan";
+import { selectBest } from "./markets/pricing";
 import { placeHedge } from "./gemini/trading";
 import {
   arcMode,
@@ -72,21 +74,21 @@ export async function createCheckoutQuote(input: { eventId: string; tierId: stri
   const tier = ev.tiers.find((t) => t.id === input.tierId);
   if (!tier) throw new Error("Unknown ticket tier");
   if (!db.offer(ev.id)?.published) throw new Error("Protection is not published for this event.");
-  const markets = await getPricingMarkets(buildCoverages(universe, ev, input.rooting).map((c) => c.hedge.eventTicker));
-  const cfg = db.offer(ev.id);
-  if (!cfg?.published) throw new Error("Protection is no longer available.");
-  const options = buildCoverages(markets, ev, input.rooting)
-    .filter((c) => cfg.coverages[c.id]?.enabled)
-    .map((c) => {
-      const coverage = { ...c, defaultRefundPct: cfg.coverages[c.id]!.refundPct };
-      return { coverage, price: quote(coverage, tier.price * input.qty) };
-    });
+  const cfg = db.offer(ev.id)!;
+  const scan = await scanCoverageMarkets(ev, universe, cfg, tier.id, input.qty, input.rooting);
+  if (!db.offer(ev.id)?.published || db.offer(ev.id)?.updatedAt !== cfg.updatedAt)
+    throw new Error("Protection changed while fetching prices. Please retry.");
+  const options = scan.markets.flatMap((market) => {
+    if (!cfg.coverages[market.coverage.id]?.enabled) return [];
+    const selected = selectBest(market.candidates, cfg.coverages[market.coverage.id]?.providers);
+    return selected?.coverage && selected.price ? [{ coverage: selected.coverage, price: selected.price, provider: selected.provider, comparison: market.candidates }] : [];
+  });
   const now = Date.now();
   const result: CheckoutQuote = {
     id: crypto.randomUUID(), ...input, offerVersion: cfg.updatedAt,
     createdAt: new Date(now).toISOString(), expiresAt: new Date(now + 30_000).toISOString(),
-    marketFetchedAt: markets.fetchedAt,
-    source: markets.source === "live" && options.every((o) => !o.coverage.hedge.indicative) ? "live" : "estimate",
+    marketFetchedAt: scan.scannedAt,
+    source: options.length > 0 && options.every((o) => o.comparison.find((c) => c.provider === o.provider)?.state === "live") ? "live" : "estimate",
     options,
   };
   db.saveQuote(result);
@@ -105,6 +107,7 @@ export async function purchase(input: {
   requestId?: string;
   quoteId?: string;
 }): Promise<Policy> {
+  if (input.quoteId && !input.demo) throw new Error("Live execution for routed quotes is not connected.");
   const mode = input.demo ? "simulated" : arcMode();
   assertStreamConfiguration(mode);
   if (
@@ -162,8 +165,13 @@ export async function purchase(input: {
 
   if (held && (q.ticketTotal !== ticketTotal || !db.offer(ev.id)?.coverages[cov.id]?.enabled || db.offer(ev.id)?.coverages[cov.id]?.refundPct !== q.refundPct))
     throw new Error("Protection changed. Refresh prices before purchasing.");
+  if (db.offer(ev.id)?.coverages[cov.id]?.providers?.[cov.hedge.provider ?? "gemini"] === false)
+    throw new Error("Provider disabled. Refresh prices before purchasing.");
 
-  // 1) Hedge on Gemini (buy the contract that pays when the refund is owed)
+  // Never submit another exchange's ticker to Gemini.
+  if (cov.hedge.provider === "kalshi" && !input.demo)
+    throw new Error("Kalshi order execution is not connected.");
+  // Record the chosen venue and quoted cost; simulated execution cannot move funds.
   const hedge = await placeHedge(
     {
       symbol: cov.hedge.instrumentSymbol,
@@ -176,10 +184,15 @@ export async function purchase(input: {
     input.demo,
   );
 
+  if (hedge.mode === "simulated") {
+    hedge.cost = q.hedgeCost;
+    hedge.avgPrice = ((q.hedgeCost - (q.exchangeFee ?? 0)) / q.contracts).toFixed(4);
+  }
   const marketRef = `${cov.hedge.eventTicker}:${cov.id}`;
   const policy: Policy = {
     id,
     quoteId: held?.id,
+    marketComparison: held?.options.find((o) => o.coverage.id === cov.id)?.comparison,
     createdAt: new Date().toISOString(),
     eventId: ev.id,
     eventTitle: ev.title,

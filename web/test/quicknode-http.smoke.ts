@@ -56,7 +56,7 @@ async function main() {
           ARC_VAULT_ADDRESS: config.vault,
           GEMINI_API_KEY: "",
           GEMINI_API_SECRET: "",
-          GEMINI_OFFLINE: "1",
+          GEMINI_OFFLINE: "1", KALSHI_OFFLINE: "1",
           QUICKNODE_STREAMS_ENABLED: "1",
           QUICKNODE_STREAM_SECURITY_TOKEN: config.secret,
           QUICKNODE_STREAM_ID: config.streamId,

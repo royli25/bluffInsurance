@@ -1,3 +1,4 @@
+import type { MarketCandidate, MarketProvider } from "./markets/types";
 import type { Coverage, Quote } from "./coverage";
 
 export interface CheckoutQuote {
@@ -11,7 +12,7 @@ export interface CheckoutQuote {
   expiresAt: string;
   marketFetchedAt: string;
   source: "live" | "estimate";
-  options: { coverage: Coverage; price: Quote }[];
+  options: { coverage: Coverage; price: Quote; provider?: MarketProvider; comparison?: MarketCandidate[] }[];
 }
 
 export function validateCheckoutQuote(

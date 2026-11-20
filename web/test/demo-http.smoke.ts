@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { once } from "node:events";
 import fs from "node:fs";
 import net from "node:net";
+import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -27,6 +28,19 @@ async function main() {
   const port = (listener.address() as net.AddressInfo).port;
   await new Promise<void>((resolve) => listener.close(() => resolve()));
   const origin = `http://127.0.0.1:${port}`;
+  let compareProviders = false;
+  let unexpectedWrites = 0;
+  const provider = createServer((req, res) => {
+    if (req.method !== "GET") unexpectedWrites++;
+    const route = req.url ?? "";
+    const body = route.includes("/exchange/status") ? { exchange_active: true, trading_active: true } : route.includes("fee_changes") ? { event_fee_changes: [], cursor: "" } : route.includes("/series/") ? { series: { fee_type: "quadratic", fee_multiplier: 1 } } : route.includes("orderbook") ? { orderbook_fp: { no_dollars: [["0.80", "10000"]] } } : {
+      event: { event_ticker: "KXNBAGAME-26NOV21PORNYK", series_ticker: "KXNBAGAME", product_metadata: { competition_scope: "Game" } },
+      markets: [{ ticker: "KXNBAGAME-26NOV21PORNYK-POR", event_ticker: "KXNBAGAME-26NOV21PORNYK", market_type: "binary", status: "active", yes_sub_title: "Portland", notional_value_dollars: "1", close_time: "2099-01-01", result: "", rules_primary: "If Portland wins the Portland vs New York Pro Basketball game originally scheduled for Nov 21, 2026, then the market resolves to Yes." }],
+    };
+    res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(body));
+  });
+  provider.listen(0, "127.0.0.1"); await once(provider, "listening");
+  const providerOrigin = `http://127.0.0.1:${(provider.address() as net.AddressInfo).port}`;
   let child: ChildProcess | undefined;
   let output = "";
   async function start() {
@@ -49,7 +63,8 @@ async function main() {
           NEXT_BUILD_DIR: process.env.NEXT_BUILD_DIR ?? ".next-streams",
           BLUFF_DB_PATH: file,
           BLUFF_LEGACY_DB_PATH: path.join(dir, "no-legacy.json"),
-          GEMINI_OFFLINE: "1",
+          GEMINI_OFFLINE: "1", KALSHI_OFFLINE: compareProviders ? "0" : "1",
+          KALSHI_API_BASE: providerOrigin + "/trade-api/v2",
           // Credentials deliberately look configured. Any failure to force demo
           // execution will hit an invalid local URL/key, never a real trade.
           GEMINI_API_BASE: origin + "/forbidden-external",
@@ -174,10 +189,19 @@ async function main() {
       "unpublished cover cannot be bought",
     );
     assert.equal((await post("/api/policies", order)).status, 400, "demo requires a server quote");
-    const quoted = await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty });
+    let quoted = await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty });
     assert.equal(quoted.status, 200, JSON.stringify(quoted.body));
     assert.equal(quoted.body.quote.source, "estimate", "offline never claims live prices");
     assert.equal(quoted.body.quote.options.length, 1);
+    assert.equal((await post("/api/offers", { eventId, published: true, coverages: { "team-loses": { enabled: true, refundPct: 15, providers: { gemini: false, kalshi: false } } } })).status, 400);
+    assert.equal((await post("/api/offers", { eventId, published: true, coverages: { "team-loses": { enabled: true, refundPct: 15, providers: { unknown: true } } } })).status, 400);
+    const changedProvider = await post("/api/offers", { eventId, published: true, coverages: { "team-loses": { enabled: true, refundPct: 15, providers: { gemini: true, kalshi: false } } } });
+    assert.equal(changedProvider.status, 200);
+    assert.equal(changedProvider.body.offer.coverages["team-loses"].providers.kalshi, false);
+    assert.equal((await post("/api/policies", { ...order, quoteId: quoted.body.quote.id })).status, 400, "provider changes invalidate outstanding quotes");
+    const staleSave = await post("/api/offers", { eventId, published: true, expectedUpdatedAt: "stale", coverages: { "team-loses": { enabled: true, refundPct: 15 } } });
+    assert.equal(staleSave.status, 400, "concurrent stale settings cannot overwrite provider choices");
+    quoted = await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty });
     const quotedOrder = { ...order, quoteId: quoted.body.quote.id };
     assert.equal((await post("/api/policies", { ...quotedOrder, qty: 3 })).status, 400, "quote binds ticket count");
     const responses = await Promise.all([
@@ -212,7 +236,7 @@ async function main() {
       await fetch(origin + `/console/contracts/${created.id}`)
     ).text();
     assert.ok(detail.includes("Resolve outcome"));
-    assert.ok(detail.includes("Gemini hedge"));
+    assert.ok(detail.includes("Gemini") && detail.includes("hedge"));
     assert.ok(
       !detail.includes(`href="${created.arc.explorerUrl}"`),
       "mock transaction must not link to a real explorer",
@@ -285,11 +309,37 @@ async function main() {
       (await policies()).find((p) => p.id === created.id)?.status,
       "paid",
     );
+    await stop(); compareProviders = true; await start();
+    await post("/api/offers", { eventId, published: true, coverages: { "team-loses": { enabled: true, refundPct: 15, providers: { gemini: true, kalshi: true } } } });
+    const routedQuote = await post("/api/quotes", { eventId, tierId: "upper", qty: 2 });
+    assert.equal(routedQuote.status, 200, JSON.stringify(routedQuote.body));
+    const selectedRoute = routedQuote.body.quote.options[0];
+    assert.equal(selectedRoute.provider, "kalshi", "fresh matching Kalshi book beats indicative Gemini fallback");
+    assert.equal(selectedRoute.comparison.length, 2);
+    const routedPurchase = await post("/api/policies", { ...order, requestId: randomUUID(), quoteId: routedQuote.body.quote.id });
+    assert.equal(routedPurchase.status, 200, JSON.stringify(routedPurchase.body));
+    assert.equal(routedPurchase.body.policy.hedgeLeg.provider, "kalshi");
+    assert.equal(routedPurchase.body.policy.hedge.mode, "simulated");
+    assert.match(routedPurchase.body.policy.hedge.order.symbol, /^KXNBAGAME-/);
+    assert.equal(routedPurchase.body.policy.premium, selectedRoute.price.premium);
+    const disable = await post("/api/offers", { eventId, published: true, coverages: { "team-loses": { enabled: true, refundPct: 15, providers: { gemini: true, kalshi: false } } } });
+    assert.equal(disable.status, 200);
+    assert.equal((await post("/api/policies", { ...order, requestId: randomUUID(), quoteId: routedQuote.body.quote.id })).status, 400);
+    const switched = await post("/api/quotes", { eventId, tierId: "upper", qty: 2 });
+    assert.equal(switched.body.quote.options[0].provider, "gemini", "disabled Kalshi cannot be chosen even when cheaper");
+    const payout = await post("/api/settle", { eventId, coverageId: "team-loses", triggered: true, demo: true });
+    assert.equal(payout.body.settled, 1);
+    await stop(); await start();
+    const stored = (await policies()).find((p) => p.id === routedPurchase.body.policy.id)!;
+    assert.equal(stored.status, "paid");
+    assert.equal(stored.hedgeLeg.provider, "kalshi");
+    assert.equal(unexpectedWrites, 0, "market comparison must never submit orders to the data provider");
     console.log(
       "PASS: draft → publish → checkout → idempotent contract → business totals → demo payout / no-payout → durable ledger. Configured credentials never execute, and live contracts remain untouched.",
     );
   } finally {
     await stop();
+    await new Promise<void>((resolve) => provider.close(() => resolve()));
     fs.rmSync(dir, { recursive: true, force: true });
   }
 }

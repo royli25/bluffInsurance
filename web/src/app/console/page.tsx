@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/store";
 import { businessSummary } from "@/lib/business";
 import { usd } from "@/lib/format";
+import ManagedCoverageMarkets from "@/components/ManagedCoverageMarkets";
 import AutoRefresh from "@/components/AutoRefresh";
 import ContractLedger from "@/components/ContractLedger";
 export const dynamic = "force-dynamic";
@@ -44,6 +45,7 @@ export default function Dashboard() {
           </div>
         ))}
       </section>
+      <ManagedCoverageMarkets />
       <section className="overflow-hidden rounded-lg bg-neutral-900">
         <div className="flex items-center justify-between gap-3 px-5 py-5">
           <h2 className="font-semibold">Recent contracts</h2>

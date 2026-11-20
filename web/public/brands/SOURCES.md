@@ -5,3 +5,5 @@
 - Quicknode: black and white SVG wordmarks from https://www.quicknode.com/brand-kit/quicknode-brand-kit.zip, linked by https://www.quicknode.com/brand.
 
 Geometry and proportions are preserved. Monochrome Gemini and Arc marks invert on the opposite surface. Provider marks identify integrations and remain secondary to Bluff.
+
+- Kalshi: original SVG wordmarks served by https://docs.kalshi.com/logo-light.svg and https://docs.kalshi.com/logo-dark.svg, linked in the official documentation header. Kalshi wordmark paths are extracted without the separate “API Docs” annotation; the logo geometry is preserved.

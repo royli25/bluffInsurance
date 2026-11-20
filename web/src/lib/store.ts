@@ -4,6 +4,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { keccak256, toHex } from "viem";
 import deployment from "./arc/deployment.json";
+import type { MarketCandidate, ProviderSettings } from "./markets/types";
 import type { CheckoutQuote } from "./checkout-quote";
 import type { TicketEvent } from "./catalog";
 import type { CoverageId, HedgeLeg } from "./coverage";
@@ -43,6 +44,7 @@ export interface Policy {
   arc: ArcReceipt;
   status: "pending" | "active" | "settling" | "paid" | "expired";
   quoteId?: string;
+  marketComparison?: MarketCandidate[];
   confirmationMode?: "stream" | "receipt" | "simulated";
   settlementError?: string;
   purchaseError?: string;
@@ -55,7 +57,7 @@ export interface OfferConfig {
   eventId: string;
   published: boolean;
   coverages: Partial<
-    Record<CoverageId, { enabled: boolean; refundPct: number }>
+    Record<CoverageId, { enabled: boolean; refundPct: number; providers?: ProviderSettings }>
   >;
   updatedAt: string;
 }
@@ -505,10 +507,18 @@ export function openStore(file: string, legacyFile?: string) {
         .immediate(),
     offer: (id: string) => read().offers[id],
     offers: () => read().offers,
-    setOffer: (o: OfferConfig) =>
+    setOffer: (o: OfferConfig, expectedUpdatedAt?: string) => {
+      let saved = o;
       mutate((d) => {
-        d.offers[o.eventId] = o;
-      }),
+        const previous = d.offers[o.eventId];
+        if (expectedUpdatedAt !== undefined && previous?.updatedAt !== expectedUpdatedAt)
+          throw new Error("Protection changed elsewhere. Refresh before saving.");
+        const timestamp = Math.max(Date.parse(o.updatedAt), previous ? Date.parse(previous.updatedAt) + 1 : 0);
+        saved = { ...o, updatedAt: new Date(timestamp).toISOString() };
+        d.offers[o.eventId] = saved;
+      });
+      return saved;
+    },
     customEvents: () => read().customEvents,
     addCustomEvent: (e: TicketEvent) =>
       mutate((d) => {
@@ -556,7 +566,7 @@ export const db = {
   claimSettlement: (ids: string[]) => currentStore().claimSettlement(ids),
   offer: (id: string) => currentStore().offer(id),
   offers: () => currentStore().offers(),
-  setOffer: (o: OfferConfig) => currentStore().setOffer(o),
+  setOffer: (o: OfferConfig, expectedUpdatedAt?: string) => currentStore().setOffer(o, expectedUpdatedAt),
   customEvents: () => currentStore().customEvents(),
   addCustomEvent: (e: TicketEvent) => currentStore().addCustomEvent(e),
   reset: () => currentStore().reset(),

@@ -54,6 +54,7 @@ export function normalizeEvent(e: any): GEvent {
   return {
     id: String(e.id),
     title: e.title,
+    status: e.status,
     category: e.category,
     ticker: e.ticker,
     startTime: e.startTime ?? null,

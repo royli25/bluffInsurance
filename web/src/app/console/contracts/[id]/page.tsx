@@ -4,6 +4,8 @@ import { formatUnits } from "viem";
 import { db } from "@/lib/store";
 import { usd } from "@/lib/format";
 import { contractStatus } from "@/lib/business";
+import ProviderLogo from "@/components/ProviderLogo";
+import { providerName } from "@/lib/markets/types";
 import AutoRefresh from "@/components/AutoRefresh";
 
 export const dynamic = "force-dynamic";
@@ -152,7 +154,8 @@ export default async function Contract({
         </summary>
         <div className="mt-6 space-y-6 text-sm">
           <section>
-            <h3 className="text-neutral-300">Gemini hedge · {p.hedge.mode === "simulated" ? "Not submitted" : "Submitted"}</h3>
+            <h3 className="text-neutral-300">{providerName(p.hedgeLeg.provider ?? "gemini")} hedge · {p.hedge.mode === "simulated" ? "Not submitted" : "Submitted"}</h3>
+            <div className="mt-3"><ProviderLogo provider={p.hedgeLeg.provider ?? "gemini"} dark /></div>
             <p className="mt-2 break-all font-mono text-xs text-neutral-500">
               {p.hedge.order.quantity} {p.hedge.order.outcome.toUpperCase()} ·{" "}
               {p.hedge.order.symbol} @ {p.hedge.order.price}

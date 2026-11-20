@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
-import ProviderLogo from "@/components/ProviderLogo";
-import { useState } from "react";
+import MarketProviderOptions from "./MarketProviderOptions";
+import type { MarketScan } from "@/lib/markets/types";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TicketEvent } from "@/lib/catalog";
 import { quote, type Coverage } from "@/lib/coverage";
@@ -18,6 +19,9 @@ export default function CoverageBuilder({
 }) {
   const router = useRouter();
   const [cfg, setCfg] = useState(initial.coverages);
+  const [version, setVersion] = useState(initial.updatedAt);
+  const [marketScan, setMarketScan] = useState<MarketScan | null>(null);
+  const [checkingMarkets, setCheckingMarkets] = useState(true);
   const [published, setPublished] = useState(initial.published);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -27,6 +31,25 @@ export default function CoverageBuilder({
   const [tierId, setTierId] = useState(ev.tiers[0].id);
   const tier = ev.tiers.find((t) => t.id === tierId)!;
   const selected = coverages.filter((c) => cfg[c.id]?.enabled);
+  useEffect(() => {
+    let controller: AbortController | undefined;
+    async function load() {
+      controller?.abort(); controller = new AbortController(); setCheckingMarkets(true);
+      try {
+        const r = await fetch(`/api/market-quotes?eventId=${encodeURIComponent(ev.id)}&tierId=${encodeURIComponent(tierId)}`, { signal: controller.signal });
+        if (!r.ok) throw new Error("Market prices are unavailable.");
+        const data = await r.json(); if (!controller.signal.aborted) setMarketScan(data);
+      } catch (e) { if (!controller.signal.aborted) setError((e as Error).message); }
+      finally { if (!controller.signal.aborted) setCheckingMarkets(false); }
+    }
+    void load(); const interval = window.setInterval(load, 30_000);
+    return () => { controller?.abort(); window.clearInterval(interval); };
+  }, [ev.id, tierId]);
+  useEffect(() => {
+    if (!dirty && Date.parse(initial.updatedAt) > Date.parse(version)) {
+      setCfg(initial.coverages); setVersion(initial.updatedAt); setPublished(initial.published); setSavedCfg(JSON.stringify(initial.coverages));
+    }
+  }, [dirty, version, initial.coverages, initial.updatedAt, initial.published]);
   async function save(pub: boolean) {
     setBusy(true);
     setError("");
@@ -38,12 +61,14 @@ export default function CoverageBuilder({
         body: JSON.stringify({
           eventId: ev.id,
           published: pub,
+          expectedUpdatedAt: version,
           coverages: cfg,
         }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error ?? "Could not save protection.");
       setPublished(pub);
+      setVersion(data.offer.updatedAt);
       setSavedCfg(JSON.stringify(cfg));
       setMessage(pub ? "Protection published." : "Protection unpublished.");
       router.refresh();
@@ -58,7 +83,6 @@ export default function CoverageBuilder({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-5">
           <h2 className="font-semibold">Protection options</h2>
-          <ProviderLogo provider="gemini" dark />
         </div>
         <select
           aria-label="Preview ticket tier"
@@ -138,6 +162,9 @@ export default function CoverageBuilder({
                   <strong className="text-neutral-300">{usd(q.payout)}</strong>
                 </span>
               </div>
+              <MarketProviderOptions coverage={c} candidates={marketScan?.markets.find((m) => m.coverage.id === c.id)?.candidates}
+                settings={st.providers} total={tier.price} refundPct={st.refundPct} disabled={busy || !st.enabled} loading={checkingMarkets}
+                onChange={(provider, on) => setCfg({ ...cfg, [c.id]: { ...st, providers: { ...st.providers, [provider]: on } } })} />
               {c.hedgeType === "partial" && (
                 <p className="mt-3 text-xs text-amber-300/70">
                   Partial hedge · remaining risk backed by reserves

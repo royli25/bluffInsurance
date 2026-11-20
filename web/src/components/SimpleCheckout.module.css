@@ -172,3 +172,5 @@
 
 .protectionPurchase { display: flex; align-items: center; flex: none; gap: 20px; margin-left: auto; }
 @media (max-width: 680px) { .protectionPurchase { width: calc(100% - 26px); margin-left: 26px; justify-content: space-between; gap: 12px; } }
+
+.kalshiChip { display: inline-flex; align-items: center; justify-content: center; padding: 7px 9px; border-radius: 5px; background: #def5e9; }
