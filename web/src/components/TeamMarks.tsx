@@ -31,8 +31,8 @@ export function EventMarks({ ev, large = false }: { ev: Pick<TicketEvent, "leagu
   return <TeamMarks league={ev.league} participants={participants} large={large} />;
 }
 
-export function PolicyMarks({ eventId }: { eventId: string }) {
-  const match = eventId.match(/^([a-z0-9]+)-\d{10}-([a-z0-9]+)-([a-z0-9]+)$/i);
+export function PolicyMarks({ eventId, large = false }: { eventId: string; large?: boolean }) {
+  const match = eventId.replace(/^custom-/, "").match(/^([a-z0-9]+)-\d{10}-([a-z0-9]+)-([a-z0-9]+)$/i);
   if (!match) return null;
-  return <TeamMarks league={match[1]} participants={[{ abbreviation: match[2], side: "away" }, { abbreviation: match[3], side: "home" }]} />;
+  return <TeamMarks league={match[1]} participants={[{ abbreviation: match[2], side: "away" }, { abbreviation: match[3], side: "home" }]} large={large} />;
 }

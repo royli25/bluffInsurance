@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import MarketProviderOptions from "./MarketProviderOptions";
 import type { MarketScan } from "@/lib/markets/types";
 import { useEffect, useState } from "react";
@@ -193,14 +192,6 @@ export default function CoverageBuilder({
                 : "Save protection"
               : "Publish protection"}
         </button>
-        {published && (
-          <Link
-            href={`/demo/checkout?event=${ev.id}`}
-            className="rounded-md border border-neutral-700 px-4 py-2.5 text-sm hover:bg-neutral-800"
-          >
-            Open checkout →
-          </Link>
-        )}
         {published && (
           <button
             disabled={busy}

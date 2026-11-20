@@ -18,9 +18,9 @@ export default function DemoSteps({
       href: `/console/events/${eventId}#protection`,
     },
     {
-      label: "Try the checkout",
+      label: "Review contracts",
       done: purchased,
-      href: published ? `/demo/checkout?event=${eventId}` : null,
+      href: `/console/contracts?event=${eventId}`,
     },
     {
       label: "Resolve the outcome",

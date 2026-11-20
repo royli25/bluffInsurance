@@ -43,7 +43,7 @@ export default async function Account({
             My Events
           </Link>
           <Link href="/seatwise?category=sports">Find Events</Link>
-          <Link href="/console">Bluff Console</Link>
+          <Link href="/tickets">Browse events</Link>
           <a href="https://help.ticketmaster.com/">Help</a>
         </div>
         <span>Hi, Jordan</span>

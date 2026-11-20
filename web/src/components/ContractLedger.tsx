@@ -3,6 +3,7 @@ import type { Policy } from "@/lib/store";
 import { contractStatus } from "@/lib/business";
 import { usd } from "@/lib/format";
 import Icon from "./TicketmasterIcon";
+import EventIdentity from "./EventIdentity";
 export default function ContractLedger({
   policies,
   empty = "No contracts yet",
@@ -64,15 +65,20 @@ export default function ContractLedger({
                   })}
                 </time>
               </td>
-              <td className="max-w-64 px-5 py-4">
-                <Link
-                  className="font-normal text-neutral-100 hover:underline"
-                  href={`/console/contracts/${p.id}`}
-                >
-                  {p.eventTitle}
-                </Link>
-                <div className="mt-1 text-xs text-neutral-500">
-                  {p.coverageName}
+              <td className="min-w-72 max-w-sm px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <EventIdentity eventId={p.eventId} />
+                  <div className="min-w-0">
+                    <Link
+                      className="font-normal text-neutral-100 hover:underline"
+                      href={`/console/contracts/${p.id}`}
+                    >
+                      {p.eventTitle}
+                    </Link>
+                    <div className="mt-1 text-xs text-neutral-500">
+                      {p.coverageName}
+                    </div>
+                  </div>
                 </div>
               </td>
               <td className="px-5 py-4 text-neutral-400">{p.holderName}</td>

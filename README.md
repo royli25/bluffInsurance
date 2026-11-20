@@ -6,7 +6,7 @@ Every Bluff policy is **fully hedged on Gemini prediction markets** and **settle
 
 > UBC 2026 Hackathon · Consumer Apps track · Best use of Arc · Gemini Prediction Markets bounty
 
-Business demo: **Dashboard → Add event → Publish protection → Demo checkout → Contract → Resolve outcome.** See [`docs/DEMO.md`](docs/DEMO.md).
+Business: **Dashboard → Events → Contracts.** Customer: **Browse events → Tickets & protection → Confirmation.** See [`docs/DEMO.md`](docs/DEMO.md).
 
 ## How it works
 
@@ -58,13 +58,15 @@ QuickNode Streams supplies independent purchase and payout confirmations when en
 ## Run it
 
 ```bash
-cd web && npm install && npm run dev      # Node >=22 · http://localhost:3000
+cd web && npm install                     # Node >=22
+npm run dev:business                     # http://localhost:3003 · dark business console
+npm run dev:customer                     # separate terminal · http://localhost:3002 · blue/light tickets
 npm test                                 # pricing, market data and Stream integration tests
 npm run build && npm start                # optimized server; use for the demo
 cd ../contracts && npm install && npx hardhat test   # vault tests (14)
 ```
 
-Pages: `/` redirects to `/console` dashboard · `/console/events` event publishing · `/demo/checkout?event=EVENT_ID` connected simulated checkout · `/console/contracts` contract ledger · `/console/contracts/[id]` contract activity and evidence. Integration diagnostics remain under `/console/activity` and `/console/scanner`. The old storefront is no longer part of the business demo.
+Interfaces run independently, with shared offer and order data. Business uses `/console` (Dashboard, Events, Contracts); customers use `/tickets` (event selection) and `/tickets/checkout?event=EVENT_ID`. Each launch mode redirects the other interface’s pages to its own home. Old `/demo` links redirect into the customer flow. `npm run build` followed by `npm run start:business` and `npm run start:customer` serves both interfaces from the same optimized build on their respective ports. Set `BLUFF_DB_PATH` to the same persistent SQLite path when deploying separate processes.
 
 ## Screenshots
 

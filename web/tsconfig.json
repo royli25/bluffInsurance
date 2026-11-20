@@ -31,10 +31,13 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
+    ".next-business/types/**/*.ts",
     ".next-check/types/**/*.ts",
+    ".next-customer/types/**/*.ts",
+    ".next-streams/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-streams/types/**/*.ts"
+    ".next-availability/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

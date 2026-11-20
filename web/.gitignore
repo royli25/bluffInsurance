@@ -18,6 +18,8 @@
 /.next-check/
 /.next-availability/
 /.next-streams/
+/.next-business/
+/.next-customer/
 /out/
 
 # production

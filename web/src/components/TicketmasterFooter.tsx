@@ -14,7 +14,7 @@ export default function TicketmasterFooter() {
           "Do Not Sell or Share My Personal Information",
           "https://privacy.ticketmaster.com/",
         ],
-        ["Bluff Console", "/console"],
+        ["Browse events", "/tickets"],
       ],
     },
     {

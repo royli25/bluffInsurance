@@ -522,7 +522,7 @@ export default function Checkout({
       <footer className="tm-checkout-footer">
         <Icon name="lock-01" /> Protected by Bluff
         <Link href="/seatwise/account">My Tickets</Link>
-        <Link href="/console">Bluff Console</Link>
+        <Link href="/tickets">Browse events</Link>
       </footer>
     </div>
   );
