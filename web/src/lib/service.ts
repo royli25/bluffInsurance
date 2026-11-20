@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { getMarkets } from "./gemini/client";
 import { scanCoverageMarkets } from "./markets/scan";
 import { selectBest } from "./markets/pricing";
-import { placeHedge } from "./gemini/trading";
+import { hedgeMode, placeHedge } from "./gemini/trading";
 import {
   arcMode,
   recordPolicyOnArc,
@@ -181,7 +181,10 @@ export async function purchase(input: {
       quantity: q.contracts.toFixed(2),
       price: Math.min(0.99, cov.hedge.price).toFixed(2),
     },
-    input.demo,
+    // Checkout keeps its held quote, retry protection and simulated Arc record,
+    // but the Gemini hedge itself is real once live hedging is switched on.
+    // A Kalshi ticker is never sent to Gemini.
+    input.demo && (hedgeMode() !== "live" || cov.hedge.provider === "kalshi"),
   );
 
   if (hedge.mode === "simulated") {
