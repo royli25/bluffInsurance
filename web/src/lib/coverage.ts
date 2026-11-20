@@ -16,6 +16,7 @@ import { STARS, type TicketEvent } from "./catalog";
 export type CoverageId = "team-loses" | "blowout" | "snoozer" | "star-sits" | "cold" | "heat";
 
 export interface HedgeLeg {
+  provider?: "gemini" | "kalshi";
   eventTicker: string;
   eventTitle: string;
   contractLabel: string;
@@ -50,6 +51,7 @@ export interface Quote {
   payout: number;
   contracts: number;
   hedgeCost: number;
+  exchangeFee?: number;
   premium: number;
   margin: number;
 }

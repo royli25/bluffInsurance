@@ -7,9 +7,25 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test test/*.test.ts"
+    "test": "node --conditions=react-server --import tsx --test test/*.test.ts",
+    "streams:init": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts init",
+    "streams:plan": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts plan",
+    "streams:filter": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts filter",
+    "streams:create": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts create",
+    "streams:status": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts status",
+    "streams:activate": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts activate",
+    "streams:pause": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts pause",
+    "streams:backfill": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts backfill",
+    "test:streams:http": "node --conditions=react-server --import tsx test/quicknode-http.smoke.ts",
+    "test:demo:http": "node --conditions=react-server --import tsx test/demo-http.smoke.ts",
+    "dev:business": "BLUFF_INTERFACE=business NEXT_BUILD_DIR=.next-business next dev --port 3003",
+    "dev:customer": "BLUFF_INTERFACE=customer NEXT_BUILD_DIR=.next-customer next dev --port 3002",
+    "start:business": "BLUFF_INTERFACE=business next start --port 3003",
+    "start:customer": "BLUFF_INTERFACE=customer next start --port 3002",
+    "test:interfaces:http": "node --conditions=react-server --import tsx test/interfaces-http.smoke.ts"
   },
   "dependencies": {
+    "better-sqlite3": "^13.2.0",
     "geist": "^1.9.2",
     "next": "15.5.29",
     "react": "19.1.0",
@@ -20,6 +36,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -28,5 +45,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

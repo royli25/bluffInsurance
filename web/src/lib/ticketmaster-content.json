@@ -1,0 +1,213 @@
+{
+  "concerts": [
+    {
+      "name": "Oasis",
+      "genre": "Rock",
+      "image": "/ticketmaster/concerts-0.jpg"
+    },
+    {
+      "name": "Eagles",
+      "genre": "Pop",
+      "image": "/ticketmaster/concerts-1.jpg"
+    },
+    {
+      "name": "P!NK",
+      "genre": "Pop",
+      "image": "/ticketmaster/concerts-2.jpg"
+    },
+    {
+      "name": "Metallica",
+      "genre": "Heavy Metal",
+      "image": "/ticketmaster/concerts-3.jpg"
+    },
+    {
+      "name": "Lady A",
+      "genre": "Country",
+      "image": "/ticketmaster/concerts-4.jpg"
+    },
+    {
+      "name": "Morgan Wallen",
+      "genre": "Country",
+      "image": "/ticketmaster/concerts-5.jpg"
+    }
+  ],
+  "sports": [
+    {
+      "name": "Brooklyn Nets",
+      "genre": "NBA",
+      "image": "/ticketmaster/sports-0.jpg"
+    },
+    {
+      "name": "Phoenix Suns",
+      "genre": "NBA",
+      "image": "/ticketmaster/sports-1.jpg"
+    },
+    {
+      "name": "Atlanta Hawks",
+      "genre": "NBA",
+      "image": "/ticketmaster/sports-2.jpg"
+    },
+    {
+      "name": "Golden State Warriors",
+      "genre": "NBA",
+      "image": "/ticketmaster/sports-3.jpg"
+    },
+    {
+      "name": "Miami Heat",
+      "genre": "NBA",
+      "image": "/ticketmaster/sports-4.jpg"
+    },
+    {
+      "name": "Charlotte Hornets",
+      "genre": "NBA",
+      "image": "/ticketmaster/sports-5.jpg"
+    }
+  ],
+  "arts": [
+    {
+      "name": "Hamilton (Touring)",
+      "genre": "Musical",
+      "image": "/ticketmaster/arts-0.jpg"
+    },
+    {
+      "name": "Hamilton (NY)",
+      "genre": "Musical",
+      "image": "/ticketmaster/arts-1.jpg"
+    },
+    {
+      "name": "Disney On Ice presents Find Your Hero",
+      "genre": "Ice Shows",
+      "image": "/ticketmaster/arts-2.jpg"
+    },
+    {
+      "name": "Giggly Squad Podcast Live",
+      "genre": "Comedy",
+      "image": "/ticketmaster/arts-3.jpg"
+    },
+    {
+      "name": "John Mulaney",
+      "genre": "Comedy",
+      "image": "/ticketmaster/arts-4.jpg"
+    },
+    {
+      "name": "Matt Rife",
+      "genre": "Comedy",
+      "image": "/ticketmaster/arts-5.jpg"
+    }
+  ],
+  "family": [
+    {
+      "name": "Disney On Ice presents Find Your Hero",
+      "genre": "Ice Shows",
+      "image": "/ticketmaster/family-0.jpg"
+    },
+    {
+      "name": "Coachella Valley Music and Arts Festival",
+      "genre": "Alternative Rock",
+      "image": "/ticketmaster/family-1.jpg"
+    },
+    {
+      "name": "PBR: Unleash the Beast",
+      "genre": "Bullriding",
+      "image": "/ticketmaster/family-2.jpg"
+    },
+    {
+      "name": "Westminster Kennel Club Dog Show",
+      "genre": "Other",
+      "image": "/ticketmaster/family-3.jpg"
+    },
+    {
+      "name": "PBR: Unleash the Beast",
+      "genre": "Bullriding",
+      "image": "/ticketmaster/family-4.jpg"
+    },
+    {
+      "name": "Disney On Ice presents Magic in the Stars",
+      "genre": "Ice Shows",
+      "image": "/ticketmaster/family-5.jpg"
+    }
+  ],
+  "guides": [
+    {
+      "text": "See your favorite team hit the court and get tickets at the Official Ticket Marketplace of the NBA.",
+      "title": "NBA Basketball Tickets",
+      "image": "/ticketmaster/guides-0.jpg"
+    },
+    {
+      "text": "Be there live when your favorite team hits the ice and get tickets at the Official Ticket Marketplace of the NHL.",
+      "title": "NHL Hockey Tickets",
+      "image": "/ticketmaster/guides-1.jpg"
+    },
+    {
+      "text": "Catch every action-packed game this season and get tickets at the Official Ticket Marketplace of the MLS.",
+      "title": "MLS Soccer Tickets",
+      "image": "/ticketmaster/guides-2.jpg"
+    },
+    {
+      "text": "We answer all of your questions about the 2026 MLB season, including how to get tickets to see your favorite team.",
+      "title": "MLB Baseball Tickets",
+      "image": "/ticketmaster/guides-3.jpg"
+    },
+    {
+      "text": "Festive ticket deals up to 50% off land on Black Friday.",
+      "title": "Black Friday Deals",
+      "image": "/ticketmaster/guides-4.jpg"
+    }
+  ],
+  "featured": [
+    {
+      "text": "Hotels",
+      "image": "/ticketmaster/featured-0.jpg"
+    },
+    {
+      "text": "Ticket Deals",
+      "image": "/ticketmaster/featured-1.jpg"
+    },
+    {
+      "text": "VIP Packages",
+      "image": "/ticketmaster/featured-2.jpg"
+    },
+    {
+      "text": "Sell on Ticketmaster",
+      "image": "/ticketmaster/featured-3.jpg"
+    }
+  ],
+  "discover": [
+    {
+      "tagline": "General Info",
+      "title": "All In Prices Explained",
+      "text": "Here's what you need to know about All In Prices, and why there are fees on top of the ticket price.",
+      "image": "/ticketmaster/discover-0.jpg"
+    },
+    {
+      "tagline": "Ticket Tips",
+      "title": "What to Bring to a Concert",
+      "text": "Read our ultimate packing checklist before you go to your next show.",
+      "image": "/ticketmaster/discover-1.jpg"
+    },
+    {
+      "tagline": "Sports",
+      "title": "MLS 2026 Season FAQs",
+      "text": "Get ready for your next match with our 2026 MLS guide.",
+      "image": "/ticketmaster/discover-2.jpg"
+    },
+    {
+      "tagline": "General Info",
+      "title": "Get the Most Out of Your Ticketmaster Account",
+      "text": "Learn what's possible with this guide of ticket tips and info.",
+      "image": "/ticketmaster/discover-3.jpg"
+    },
+    {
+      "tagline": "Sports",
+      "title": "A Look at the 2026 MLB Schedule and New Rules",
+      "text": "MLB\u2019s 2026 season is bringing big schedule changes and new rules. Here\u2019s what fans need to know before first pitch.",
+      "image": "/ticketmaster/discover-4.jpg"
+    },
+    {
+      "tagline": "Local Guide",
+      "title": "6 Broadway Shows to See This Fall in NYC",
+      "text": "Need ideas for family activities in NYC this fall? Here are the best Broadway shows and musicals to see in 2026.",
+      "image": "/ticketmaster/discover-5.jpg"
+    }
+  ]
+}

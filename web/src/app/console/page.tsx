@@ -1,82 +1,73 @@
 import Link from "next/link";
-import Stat from "@/components/Stat";
-import StatusPill from "@/components/StatusPill";
-import { getCatalog } from "@/lib/service";
 import { db } from "@/lib/store";
-import { usd, short } from "@/lib/format";
+import { businessSummary } from "@/lib/business";
+import { dashboardActivity, dashboardEvents } from "@/lib/dashboard";
+import { dateParts, usd } from "@/lib/format";
+import ManagedCoverageMarkets from "@/components/ManagedCoverageMarkets";
+import AutoRefresh from "@/components/AutoRefresh";
+import ContractLedger from "@/components/ContractLedger";
+import DashboardCharts from "@/components/DashboardCharts";
+import EventIdentity from "@/components/EventIdentity";
+import Icon from "@/components/TicketmasterIcon";
+import styles from "@/components/Dashboard.module.css";
 
 export const dynamic = "force-dynamic";
-
-export default async function Overview() {
-  const { universe, catalog } = await getCatalog();
-  const ps = db.policies();
-  const contracts = universe.events.reduce((s, e) => s + e.contracts.length, 0);
-  const premium = ps.reduce((s, p) => s + p.premium, 0);
-  const active = ps.filter((p) => p.status === "active");
-  const liability = active.reduce((s, p) => s + p.payout, 0);
-  const hedged = active.reduce((s, p) => s + (p.hedgeType === "full" ? Number(p.hedge.filledQuantity) : p.payout * 0.35), 0);
-  // full hedges: order cost is spent; partial (proxy) hedges: capital is recycled, expected loss is the cost
-  const hedgeCost = ps.filter((p) => p.hedgeType === "full").reduce((s, p) => s + p.hedge.cost, 0);
-  const expectedProxyLoss = ps.filter((p) => p.hedgeType === "partial").reduce((s, p) => s + p.payout * 0.08, 0);
-  const margin = premium - hedgeCost - expectedProxyLoss;
-  const paid = ps.filter((p) => p.status === "paid").reduce((s, p) => s + p.payout, 0);
+export default function Dashboard() {
+  const policies = db.policies();
+  const summary = businessSummary(policies);
+  const events = dashboardEvents(policies);
+  const now = new Date();
+  const statuses = [
+    { label: "Active", count: summary.active, color: "#6ee7b7" },
+    { label: "Pending", count: policies.filter((p) => p.status === "pending" || p.status === "settling").length, color: "#fcd34d" },
+    { label: "Paid out", count: policies.filter((p) => p.status === "paid").length, color: "#8da8f5" },
+    { label: "Completed", count: policies.filter((p) => p.status === "expired").length, color: "#737373" },
+  ];
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">Overview</h1>
-        <Link href="/console/events" className="rounded-md bg-neutral-100 px-4 py-2 font-semibold text-neutral-950 hover:bg-white">Drop an event</Link>
-      </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Gemini markets" value={universe.events.length.toLocaleString()} />
-        <Stat label="Contracts indexed" value={contracts.toLocaleString()} />
-        <Stat label="Protectable events" value={String(catalog.length)} />
-        <Stat label="Policies sold" value={String(ps.length)} />
-        <Stat label="Premium written" value={usd(premium)} />
-        <Stat label="Open liability" value={usd(liability)} />
-        <Stat label="Hedge coverage" value={liability ? `${Math.min(100, Math.round((hedged / liability) * 100))}%` : "—"} />
-        <Stat label="Gross margin" value={usd(margin)} tone={margin >= 0 ? "good" : "warn"} />
-      </div>
-
-      <div className="rounded-lg bg-neutral-900 p-4">
-        <div className="mb-3 font-semibold">Pipeline</div>
-        <div className="grid gap-2 sm:grid-cols-5">
-          {[
-            ["Event dropped", "Organizer or platform"],
-            ["Gemini scan", `${universe.events.length} markets, ${universe.source}`],
-            ["Coverage match", "Moneyline, spread, total, weather"],
-            ["Hedge order", "Buy yes or no at the ask"],
-            ["Arc vault", "USDC escrow, automatic refund"],
-          ].map(([a, b]) => (
-            <div key={a} className="rounded-md bg-neutral-800 p-3">
-              <div className="font-semibold">{a}</div>
-              <div className="text-neutral-400">{b}</div>
+    <div className={styles.dashboard}>
+      <AutoRefresh enabled />
+      <header className={styles.header}>
+        <h1>Dashboard</h1>
+        <div className={styles.headerActions}>
+          <time dateTime={now.toISOString()}>{now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Chicago" })}</time>
+          <Link href="/console/events?add=1" className={styles.addEvent}><Icon name="plus" className={styles.icon} />Add event</Link>
+        </div>
+      </header>
+      <section className={styles.metrics} aria-label="Business totals">
+        <div className={styles.metric}>
+          <div className={styles.metricHeading}><h2>Active contracts</h2><span className={styles.metricGlyph}><Icon name="shield-tick" className={styles.icon} /></span></div>
+          <div data-metric="active" className={styles.metricValue}>{summary.active.toLocaleString()}</div>
+        </div>
+        <div className={styles.metric}>
+          <div className={styles.metricHeading}><h2>Protected events</h2><span className={styles.metricGlyph}><Icon name="ticket-01" className={styles.icon} /></span></div>
+          <div data-metric="events" className={styles.metricValue}>{summary.protectedEvents.toLocaleString()}</div>
+        </div>
+        <div className={`${styles.metric} ${styles.premiumMetric}`}>
+          <div className={styles.metricHeading}><h2>Premiums collected</h2><span className={styles.metricGlyph}><Icon name="credit-card-01" className={styles.icon} /></span></div>
+          <div data-metric="premiums" className={styles.metricValue}>{usd(summary.premiums)}</div>
+        </div>
+      </section>
+      <ManagedCoverageMarkets />
+      <DashboardCharts days={dashboardActivity(policies, now)} statuses={statuses} />
+      {events.length > 0 && <section className={styles.eventSection}>
+        <div className={styles.sectionHeading}><h2>Games & events</h2><Link href="/console/events" className={styles.viewAll}>View events<Icon name="arrow-right" className={styles.icon} /></Link></div>
+        <div className={styles.eventList}>
+          {events.slice(0, 3).map((event) => <Link key={event.id} href={`/console/contracts?event=${encodeURIComponent(event.id)}`} className={styles.eventCard}>
+            <EventIdentity eventId={event.id} large />
+            <div className={styles.eventInfo}><h3>{event.title}</h3><p>{dateParts(event.start).long} · {event.venue}</p></div>
+            <div className={styles.eventFacts}>
+              <div><span>Contracts</span><strong>{event.contracts}</strong></div>
+              <div><span>Premiums</span><strong>{usd(event.premiums)}</strong></div>
+              <div><span>Paid out</span><strong className={styles.paidValue}>{usd(event.paid)}</strong></div>
             </div>
-          ))}
+          </Link>)}
         </div>
-      </div>
-
-      <div className="rounded-lg bg-neutral-900">
-        <div className="flex justify-between px-4 py-3">
-          <span className="font-semibold">Recent policies</span>
-          <span className="text-neutral-400">Refunds paid {usd(paid)}</span>
-        </div>
-        {ps.length === 0 && <div className="px-4 pb-4 text-neutral-500">No policies yet. Buy one on the storefront.</div>}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <tbody>
-              {ps.slice(0, 8).map((p) => (
-                <tr key={p.id} className="border-t border-neutral-800">
-                  <td className="px-4 py-3">{p.emoji} {p.coverageName}<div className="text-neutral-400">{p.eventTitle}</div></td>
-                  <td className="px-4 py-3 text-right">{usd(p.premium)}<div className="text-neutral-400">pays {usd(p.payout)}</div></td>
-                  <td className="px-4 py-3 font-mono">{p.hedge.order.side} {p.hedge.order.quantity} {p.hedge.order.outcome} @ {p.hedge.order.price}<div className="text-neutral-400">{p.hedge.order.symbol}</div></td>
-                  <td className="px-4 py-3 font-mono text-neutral-400">{short(p.arc.txHash)}</td>
-                  <td className="px-4 py-3 text-right"><StatusPill s={p.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      </section>}
+      <section className={styles.panel}>
+        <div className={styles.recentHeading}><h2>Recent contracts</h2><Link href="/console/contracts" className={styles.viewAll}>View all<Icon name="arrow-right" className={styles.icon} /></Link></div>
+        <ContractLedger policies={policies.slice(0, 8)} />
+      </section>
+      {summary.pending > 0 && <p className={styles.pending}>{summary.pending} awaiting confirmation. <Link href="/console/contracts">View contracts</Link></p>}
     </div>
   );
 }

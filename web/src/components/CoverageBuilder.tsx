@@ -1,87 +1,222 @@
 "use client";
-import { useState } from "react";
+import MarketProviderOptions from "./MarketProviderOptions";
+import type { MarketScan } from "@/lib/markets/types";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TicketEvent } from "@/lib/catalog";
 import { quote, type Coverage } from "@/lib/coverage";
 import type { OfferConfig } from "@/lib/store";
-import { usd, pct } from "@/lib/format";
-
-export default function CoverageBuilder({ ev, coverages, initial }: { ev: TicketEvent; coverages: Coverage[]; initial: OfferConfig }) {
+import { usd } from "@/lib/format";
+export default function CoverageBuilder({
+  ev,
+  coverages,
+  initial,
+}: {
+  ev: TicketEvent;
+  coverages: Coverage[];
+  initial: OfferConfig;
+}) {
   const router = useRouter();
   const [cfg, setCfg] = useState(initial.coverages);
+  const [version, setVersion] = useState(initial.updatedAt);
+  const [marketScan, setMarketScan] = useState<MarketScan | null>(null);
+  const [checkingMarkets, setCheckingMarkets] = useState(true);
   const [published, setPublished] = useState(initial.published);
-  const [tierId, setTierId] = useState(ev.tiers[1]?.id ?? ev.tiers[0].id);
-  const [saved, setSaved] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [savedCfg, setSavedCfg] = useState(JSON.stringify(initial.coverages));
+  const dirty = savedCfg !== JSON.stringify(cfg);
+  const [tierId, setTierId] = useState(ev.tiers[0].id);
   const tier = ev.tiers.find((t) => t.id === tierId)!;
-
+  const selected = coverages.filter((c) => cfg[c.id]?.enabled);
+  useEffect(() => {
+    let controller: AbortController | undefined;
+    async function load() {
+      controller?.abort(); controller = new AbortController(); setCheckingMarkets(true);
+      try {
+        const r = await fetch(`/api/market-quotes?eventId=${encodeURIComponent(ev.id)}&tierId=${encodeURIComponent(tierId)}`, { signal: controller.signal });
+        if (!r.ok) throw new Error("Market prices are unavailable.");
+        const data = await r.json(); if (!controller.signal.aborted) setMarketScan(data);
+      } catch (e) { if (!controller.signal.aborted) setError((e as Error).message); }
+      finally { if (!controller.signal.aborted) setCheckingMarkets(false); }
+    }
+    void load(); const interval = window.setInterval(load, 30_000);
+    return () => { controller?.abort(); window.clearInterval(interval); };
+  }, [ev.id, tierId]);
+  useEffect(() => {
+    if (!dirty && Date.parse(initial.updatedAt) > Date.parse(version)) {
+      setCfg(initial.coverages); setVersion(initial.updatedAt); setPublished(initial.published); setSavedCfg(JSON.stringify(initial.coverages));
+    }
+  }, [dirty, version, initial.coverages, initial.updatedAt, initial.published]);
   async function save(pub: boolean) {
-    setPublished(pub);
-    await fetch("/api/offers", { method: "POST", body: JSON.stringify({ eventId: ev.id, published: pub, coverages: cfg }) });
-    setSaved(pub ? "Published to checkout" : "Unpublished");
-    router.refresh();
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const r = await fetch("/api/offers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: ev.id,
+          published: pub,
+          expectedUpdatedAt: version,
+          coverages: cfg,
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error ?? "Could not save protection.");
+      setPublished(pub);
+      setVersion(data.offer.updatedAt);
+      setSavedCfg(JSON.stringify(cfg));
+      setMessage(pub ? "Protection published." : "Protection unpublished.");
+      router.refresh();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
-
   return (
-    <section className="rounded-lg bg-neutral-900 p-4">
+    <section className="rounded-lg bg-neutral-900 p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base">Coverage builder</h2>
-        <select value={tierId} onChange={(e) => setTierId(e.target.value)} className="rounded-md bg-neutral-800 px-2 py-1.5 text-neutral-200">
-          {ev.tiers.map((t) => <option key={t.id} value={t.id}>{t.name}, {usd(t.price)}</option>)}
+        <div className="flex flex-wrap items-center gap-5">
+          <h2 className="font-semibold">Protection options</h2>
+        </div>
+        <select
+          aria-label="Preview ticket tier"
+          value={tierId}
+          onChange={(e) => setTierId(e.target.value)}
+          className="rounded-md bg-neutral-900 px-3 py-2 text-xs text-neutral-400"
+        >
+          {ev.tiers.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name} · {usd(t.price)}
+            </option>
+          ))}
         </select>
       </div>
-      {coverages.length === 0 && <div className="mt-3 text-amber-300">No Gemini markets can hedge this event yet.</div>}
-      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+      <fieldset
+        disabled={busy}
+        className="mt-5 grid min-w-0 gap-3 lg:grid-cols-2"
+      >
         {coverages.map((c) => {
-          const st = cfg[c.id] ?? { enabled: true, refundPct: c.defaultRefundPct };
+          const st = cfg[c.id] ?? {
+            enabled: false,
+            refundPct: c.defaultRefundPct,
+          };
           const q = quote(c, tier.price, st.refundPct);
-          const set = (patch: Partial<typeof st>) => setCfg({ ...cfg, [c.id]: { ...st, ...patch } });
           return (
-            <div key={c.id} className={`rounded-md bg-neutral-800 p-4 ${st.enabled ? "" : "opacity-40"}`}>
-              <div className="flex items-start gap-3">
-                <div className="text-xl">{c.emoji}</div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{c.name}</span>
-                    <span className={c.hedgeType === "full" ? "text-emerald-400" : "text-amber-300"}>{c.hedgeType === "full" ? "Fully hedged" : "Partial hedge"}</span>
-                  </div>
-                  <div className="text-neutral-400">If {c.trigger}, {pct(c.probability)} implied</div>
-                </div>
-                <button onClick={() => set({ enabled: !st.enabled })} aria-label="toggle" className={`h-6 w-11 rounded-full p-0.5 transition ${st.enabled ? "bg-neutral-100" : "bg-neutral-600"}`}>
-                  <span className={`block h-5 w-5 rounded-full transition ${st.enabled ? "translate-x-5 bg-neutral-900" : "bg-neutral-300"}`} />
-                </button>
+            <div
+              key={c.id}
+              className={`rounded-md p-4 ${st.enabled ? "bg-neutral-800/80" : "bg-neutral-800/30"}`}
+            >
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={st.enabled}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      [c.id]: { ...st, enabled: e.target.checked },
+                    })
+                  }
+                  className="mt-1 h-4 w-4 accent-emerald-300"
+                />
+                <span>
+                  <span className="font-semibold">{c.name}</span>
+                  <span className="mt-1 block text-xs leading-5 text-neutral-500">
+                    If {c.trigger}
+                  </span>
+                </span>
+              </label>
+              <label
+                className={`mt-5 flex items-center gap-3 text-xs ${st.enabled ? "text-neutral-400" : "text-neutral-600"}`}
+              >
+                <span className="min-w-24">Refund {st.refundPct}%</span>
+                <input
+                  aria-label={`${c.name} refund percentage`}
+                  type="range"
+                  min="10"
+                  max="100"
+                  step="5"
+                  disabled={!st.enabled}
+                  value={st.refundPct}
+                  onChange={(e) =>
+                    setCfg({
+                      ...cfg,
+                      [c.id]: { ...st, refundPct: Number(e.target.value) },
+                    })
+                  }
+                  className="min-w-0 flex-1 accent-neutral-300"
+                />
+              </label>
+              <div className="mt-4 flex flex-wrap justify-between gap-2 pt-3 text-xs text-neutral-500">
+                <span>
+                  Estimated premium{" "}
+                  <strong className="text-neutral-300">{usd(q.premium)}</strong>
+                </span>
+                <span>
+                  Potential payout{" "}
+                  <strong className="text-neutral-300">{usd(q.payout)}</strong>
+                </span>
               </div>
-              <div className="mt-4 flex items-center gap-3">
-                <span className="w-24 text-neutral-300">Refund {st.refundPct}%</span>
-                <input type="range" min={10} max={100} step={5} value={st.refundPct} onChange={(e) => set({ refundPct: Number(e.target.value) })} className="flex-1 accent-neutral-200" />
-              </div>
-              <div className="mt-4 grid grid-cols-4 gap-2">
-                {[
-                  ["Payout", usd(q.payout)],
-                  [c.hedgeType === "full" ? "Hedge cost" : "Hedge capital", usd(q.hedgeCost)],
-                  ["Fan pays", usd(q.premium)],
-                  ["Margin", usd(q.margin)],
-                ].map(([k, v]) => (
-                  <div key={k} className="rounded-md bg-neutral-700/60 p-2">
-                    <div className="text-neutral-400">{k}</div>
-                    <div className="font-semibold">{v}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 rounded-md bg-neutral-900 p-3 font-mono text-neutral-300">
-                <div>Buy {q.contracts.toFixed(2)} {c.hedge.outcome} @ {c.hedge.price.toFixed(2)}{c.hedge.indicative ? ", indicative" : ""}</div>
-                <div className="text-neutral-400">{c.hedge.instrumentSymbol}</div>
-              </div>
-              {c.basisNote && <div className="mt-3 text-neutral-400">Hedge capital is recycled after the injury report. {c.basisNote}</div>}
+              <MarketProviderOptions coverage={c} candidates={marketScan?.markets.find((m) => m.coverage.id === c.id)?.candidates}
+                settings={st.providers} total={tier.price} refundPct={st.refundPct} disabled={busy || !st.enabled} loading={checkingMarkets}
+                onChange={(provider, on) => setCfg({ ...cfg, [c.id]: { ...st, providers: { ...st.providers, [provider]: on } } })} />
+              {c.hedgeType === "partial" && (
+                <p className="mt-3 text-xs text-amber-300/70">
+                  Partial hedge · remaining risk backed by reserves
+                </p>
+              )}
             </div>
           );
         })}
+      </fieldset>
+      {!coverages.length && (
+        <p className="mt-5 text-sm text-amber-300">
+          No matching protection markets are available for this event.
+        </p>
+      )}
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => save(true)}
+          disabled={busy || !selected.length}
+          className="rounded-md bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-950 disabled:opacity-30"
+        >
+          {busy
+            ? "Saving…"
+            : published
+              ? dirty
+                ? "Save changes"
+                : "Save protection"
+              : "Publish protection"}
+        </button>
+        {published && (
+          <button
+            disabled={busy}
+            onClick={() => save(false)}
+            className="ml-auto text-xs text-neutral-600 hover:text-neutral-300"
+          >
+            Unpublish
+          </button>
+        )}
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button onClick={() => save(true)} className="rounded-md bg-neutral-100 px-4 py-2 font-semibold text-neutral-950 hover:bg-white">Publish to checkout</button>
-        {published && <button onClick={() => save(false)} className="rounded-md bg-neutral-800 px-4 py-2 text-neutral-200 hover:bg-neutral-700">Unpublish</button>}
-        <a href={`/seatwise/event/${ev.id}`} className="text-neutral-300 hover:text-white">Preview on storefront</a>
-        {saved && <span className="text-emerald-400">{saved}</span>}
-      </div>
+      {dirty && published && (
+        <p className="mt-3 text-xs text-amber-300">
+          Save your changes to update the checkout.
+        </p>
+      )}
+      {message && (
+        <p role="status" className="mt-3 text-xs text-emerald-300">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="mt-3 text-xs text-red-300">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

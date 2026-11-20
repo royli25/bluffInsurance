@@ -135,6 +135,9 @@ flowchart LR
   O[Settlement oracle] -->|poll resolution| GEM
   O -->|settleMarket| V
   V -->|USDC refund| Fan((Fan wallet<br/>embedded / invisible))
+  V --> QN[QuickNode Streams]
+  QN -->|signed webhook| J[(Durable event journal)]
+  J -->|purchase / payout confirmation| Web
 ```
 
 | Component | Responsibility |
@@ -145,6 +148,7 @@ flowchart LR
 | **Hedge executor** | **Live mode** (keys present): HMAC-SHA384-signed private API (`X-GEMINI-APIKEY`, `X-GEMINI-PAYLOAD`, `X-GEMINI-SIGNATURE`), places a limit order at the ask on the instrument symbol. **Sim mode** (no keys): builds and logs the exact order payload and records a simulated fill at the ask |
 | **BluffProtectionVault (Arc)** | USDC escrow and policy registry. `purchasePolicy(policyId, marketKey, payout, premium)` pulls the premium. `depositHedgeProceeds(marketKey, amount)` lets the operator top up the vault from hedge winnings. `settleMarket(marketKey, triggered)` is oracle-only and pays every triggered policy its payout in USDC, or marks it expired. Events: `PolicyPurchased`, `MarketSettled`, `PolicyPaid` |
 | **Settlement oracle** | Polls Gemini for market resolution, then calls `settleMarket`. For the MVP it is a single trusted signer. Gemini's settled value is the source of truth |
+| **QuickNode Streams** | Implemented optional Arc execution confirmation layer: vault-only receipt filter, authenticated webhook, durable SQLite journal, deduplicated retries, reorg reconciliation, historical backfills and `/console/activity`. Live account setup and testnet delivery verification are still required; see [setup guide](QUICKNODE-STREAMS.md). |
 
 **Money flow:** fan pays premium (USDC into the vault) → backend buys the hedge on Gemini → event happens → Gemini settles and pays $1 per contract to the Bluff account → operator calls `depositHedgeProceeds` → oracle calls `settleMarket` → the vault pays fans. Fans need no wallet knowledge: they get an embedded wallet and a "refund sent" notification.
 
@@ -174,7 +178,8 @@ flowchart LR
 | **Best use of Arc** ($1k) | USDC-native escrow, policy registry and automatic payouts on Arc testnet | Vault contract address, purchase/settle txs |
 | **Gemini Prediction Markets** ($2.5k / $1k / $500) | The whole product runs on Gemini's predictions API: a live scan of ~1k events, pricing from live asks, hedge orders | Dashboard scan view, quote breakdown, order payloads |
 | **Official Winner** | Auto-entered | — |
-| ElevenLabs / QuickNode Streams / Grok Bot | Out of scope unless time remains (for example a voice "refund sent" call, or Streams watching vault events) | — |
+| **QuickNode Streams** | Core confirmation source for live policies and payouts when enabled | Signed vault events → durable journal → account state and activity feed. Real provider delivery evidence pending account configuration. |
+| ElevenLabs / Grok Bot | Out of scope unless time remains | — |
 
 ---
 

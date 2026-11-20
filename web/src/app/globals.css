@@ -16,3 +16,5 @@ body {
   background: #fff;
   color: #111;
 }
+
+.business-icon { display: inline-block; width: 16px; height: 16px; background: currentColor; mask: no-repeat center / contain; -webkit-mask: no-repeat center / contain; }
