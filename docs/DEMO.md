@@ -10,7 +10,7 @@ Run `npm run dev:business` at [localhost:3003](http://localhost:3003) and `npm r
 
 The dashboard has three totals: currently active customer contracts, distinct events with active contracts, and all-time confirmed premiums before hedge costs. Pending purchases are excluded from premiums. A payout reduces the active count; it does not erase the premium from the sales total.
 
-The simplified demo is always simulated, even when live execution credentials are configured. No tickets are issued, no charge is processed, no real hedge is placed, and no onchain payment is sent. Demo controls exclude live policies. Repeated requests from one checkout use the same contract ID, so retries do not inflate the ledger.
+The simplified demo is simulated by default, even when Gemini API keys are configured. No tickets are issued, no charge is processed, no real hedge is placed, and no onchain payment is sent. The one exception is the explicit `GEMINI_LIVE_HEDGE=1` switch: with it and both keys set, checkout sends a real fill-or-kill Gemini order for Gemini-priced covers, while Kalshi-priced covers and the Arc record stay simulated. Demo controls exclude live policies. Repeated requests from one checkout use the same contract ID, so retries do not inflate the ledger.
 
 The primary navigation is **Dashboard · Events · Contracts**. Customer browsing and checkout live in their own interface at `/tickets`, with no business navigation or resolution controls. Original `/seatwise/*` routes are retained for compatibility with the earlier implementation; they are not linked in the business demo. `/demo` redirects to customer event selection, and `/console/policies` redirects to the new Contracts ledger.
 

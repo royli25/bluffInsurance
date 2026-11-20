@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { validateCheckoutQuote, type CheckoutQuote } from "../src/lib/checkout-quote";
-import { openStore } from "../src/lib/store";
+import { openStore, UNSAVED_OFFER_VERSION } from "../src/lib/store";
 import { policy } from "./helpers/streams-fixtures";
 
 const selection = { eventId: "test", tierId: "upper", qty: 2, rooting: "home" as const };
@@ -32,6 +32,17 @@ test("quote consumption is atomic with the policy and expired quotes cannot be c
     assert.throws(() => store.addPolicy({ ...p, id: "expired-order", quoteId: "expired" }), /expired/);
     assert.equal(store.policies().length, 1);
     assert.throws(() => store.addPolicy({ ...p, id: "invalid-order", quoteId: "not-real" }), /expired/);
+  } finally { store.close(); }
+});
+
+test("the first save of an unsaved default offer passes the version check", () => {
+  const store = openStore(":memory:");
+  try {
+    const draft = { eventId: "event", published: true, updatedAt: new Date().toISOString(), coverages: { "team-loses": { enabled: true, refundPct: 15 } } };
+    assert.throws(() => store.setOffer(draft, "2026-01-01T00:00:00.000Z"), /changed elsewhere/);
+    const saved = store.setOffer(draft, UNSAVED_OFFER_VERSION);
+    assert.throws(() => store.setOffer(draft, UNSAVED_OFFER_VERSION), /changed elsewhere/);
+    assert.equal(store.offer("event")?.updatedAt, saved.updatedAt);
   } finally { store.close(); }
 });
 
