@@ -18,6 +18,7 @@ export async function POST(req: Request) {
       holderName: body.holderName ?? "Guest",
       holderEmail: body.holderEmail ?? "guest@example.com",
       demo: body.demo === true,
+      quoteId: typeof body.quoteId === "string" ? body.quoteId : undefined,
       requestId:
         typeof body.requestId === "string" ? body.requestId : undefined,
     });

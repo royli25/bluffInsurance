@@ -1,6 +1,6 @@
 import "server-only";
 import crypto from "node:crypto";
-import { getMarkets } from "./gemini/client";
+import { getPricingMarkets, getMarkets } from "./gemini/client";
 import { placeHedge } from "./gemini/trading";
 import {
   arcMode,
@@ -21,6 +21,7 @@ import {
   type CoverageId,
 } from "./coverage";
 import { db, type OfferConfig, type Policy } from "./store";
+import { validateCheckoutQuote, type CheckoutQuote } from "./checkout-quote";
 import type { GEvent } from "./gemini/types";
 
 export async function getCatalog() {
@@ -62,6 +63,36 @@ export async function offeredCoverages(
     }));
 }
 
+/** A short-lived, server-priced demo quote; never reserves a live hedge. */
+export async function createCheckoutQuote(input: { eventId: string; tierId: string; qty: number; rooting: "home" | "away" }): Promise<CheckoutQuote> {
+  if (!Number.isInteger(input.qty) || input.qty < 1 || input.qty > 6 || !["home", "away"].includes(input.rooting))
+    throw new Error("Choose a valid team and between 1 and 6 tickets.");
+  const { ev, universe } = await getEvent(input.eventId);
+  if (!ev) throw new Error("Unknown event");
+  const tier = ev.tiers.find((t) => t.id === input.tierId);
+  if (!tier) throw new Error("Unknown ticket tier");
+  if (!db.offer(ev.id)?.published) throw new Error("Protection is not published for this event.");
+  const markets = await getPricingMarkets(buildCoverages(universe, ev, input.rooting).map((c) => c.hedge.eventTicker));
+  const cfg = db.offer(ev.id);
+  if (!cfg?.published) throw new Error("Protection is no longer available.");
+  const options = buildCoverages(markets, ev, input.rooting)
+    .filter((c) => cfg.coverages[c.id]?.enabled)
+    .map((c) => {
+      const coverage = { ...c, defaultRefundPct: cfg.coverages[c.id]!.refundPct };
+      return { coverage, price: quote(coverage, tier.price * input.qty) };
+    });
+  const now = Date.now();
+  const result: CheckoutQuote = {
+    id: crypto.randomUUID(), ...input, offerVersion: cfg.updatedAt,
+    createdAt: new Date(now).toISOString(), expiresAt: new Date(now + 30_000).toISOString(),
+    marketFetchedAt: markets.fetchedAt,
+    source: markets.source === "live" && options.every((o) => !o.coverage.hedge.indicative) ? "live" : "estimate",
+    options,
+  };
+  db.saveQuote(result);
+  return result;
+}
+
 export async function purchase(input: {
   eventId: string;
   coverageId: CoverageId;
@@ -72,6 +103,7 @@ export async function purchase(input: {
   holderEmail: string;
   demo?: boolean;
   requestId?: string;
+  quoteId?: string;
 }): Promise<Policy> {
   const mode = input.demo ? "simulated" : arcMode();
   assertStreamConfiguration(mode);
@@ -117,11 +149,19 @@ export async function purchase(input: {
     return previous;
   }
   if (previous) return reuse(previous);
-  const covs = await offeredCoverages(ev, input.rooting);
+  // Only the demo supports a time-bound price until live execution can guarantee a fill.
+  const held = input.demo ? validateCheckoutQuote(
+    input.quoteId ? db.checkoutQuote(input.quoteId) : undefined,
+    input, db.offer(input.eventId)?.updatedAt ?? "",
+  ) : undefined;
+  const covs = held ? held.options.map((o) => o.coverage) : await offeredCoverages(ev, input.rooting);
   const cov = covs.find((c) => c.id === input.coverageId);
   if (!cov) throw new Error("Coverage not offered");
   const ticketTotal = tier.price * input.qty;
-  const q = quote(cov, ticketTotal, cov.defaultRefundPct);
+  const q = held?.options.find((o) => o.coverage.id === cov.id)?.price ?? quote(cov, ticketTotal, cov.defaultRefundPct);
+
+  if (held && (q.ticketTotal !== ticketTotal || !db.offer(ev.id)?.coverages[cov.id]?.enabled || db.offer(ev.id)?.coverages[cov.id]?.refundPct !== q.refundPct))
+    throw new Error("Protection changed. Refresh prices before purchasing.");
 
   // 1) Hedge on Gemini (buy the contract that pays when the refund is owed)
   const hedge = await placeHedge(
@@ -139,6 +179,7 @@ export async function purchase(input: {
   const marketRef = `${cov.hedge.eventTicker}:${cov.id}`;
   const policy: Policy = {
     id,
+    quoteId: held?.id,
     createdAt: new Date().toISOString(),
     eventId: ev.id,
     eventTitle: ev.title,

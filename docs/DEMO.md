@@ -31,3 +31,13 @@ npm run test:streams:http
 The demo HTTP test uses a temporary database and a separate production server. It covers unpublished checkouts, protection configuration validation, purchases, concurrent retries, dashboard totals, both settlement outcomes, restart persistence and isolation from live contracts. It deliberately configures unusable execution credentials and a local fake trading URL to prove the demo never attempts a real trade.
 
 Interface rules are in [DESIGN.md](../DESIGN.md): no eyebrows, no explanatory subcaptions, neutral surfaces and a restrained type scale.
+
+## Pricing quotes
+
+Checkout requests `/api/quotes` on entry and after ticket tier or quantity changes. The server fetches the relevant Gemini event books with a four-second timeout, checks the published protection settings, and calculates premiums. Catalog page rendering still uses the fast background cache. There is no artificial loading delay.
+
+A server quote lasts 30 seconds. The customer sees its countdown and explicitly refreshes after expiry. Purchases use the stored premium, refund and hedge inputs; they cannot silently recalculate a different price. Quotes bind the event, tier, quantity, team and offer version. SQLite atomically consumes a quote with its policy, so another order cannot reuse it. Retries of an already created order remain idempotent.
+
+Fresh executable ask data is labeled **Gemini prices**. Offline data, failed requests and indicative prices are labeled **Demo estimate**. The business builder shows **Estimated premium** because it configures refund terms, not a fixed selling price. Star Sits pricing continues to include a modeled probability and proxy hedge.
+
+These time-bound quotes apply to the simulated checkout. They do not reserve a Gemini order or guarantee a live fill. The legacy live purchase route remains separate; a production price guarantee needs an execution/reserve policy before enabling a hold there.

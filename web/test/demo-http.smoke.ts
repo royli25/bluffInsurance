@@ -130,7 +130,8 @@ async function main() {
     const draft = await (
       await fetch(origin + `/demo/checkout?event=${eventId}`)
     ).text();
-    assert.ok(draft.includes("Protection is not published yet"));
+    assert.ok(draft.includes("Protection is not published yet") || draft.includes("Choose your protection"), draft.slice(0, 500) + output);
+    assert.equal((await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty })).status, 400, "unpublished protection cannot be quoted");
     assert.equal((await post("/api/policies", order)).status, 400);
     assert.equal(
       (
@@ -172,9 +173,16 @@ async function main() {
       400,
       "unpublished cover cannot be bought",
     );
+    assert.equal((await post("/api/policies", order)).status, 400, "demo requires a server quote");
+    const quoted = await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty });
+    assert.equal(quoted.status, 200, JSON.stringify(quoted.body));
+    assert.equal(quoted.body.quote.source, "estimate", "offline never claims live prices");
+    assert.equal(quoted.body.quote.options.length, 1);
+    const quotedOrder = { ...order, quoteId: quoted.body.quote.id };
+    assert.equal((await post("/api/policies", { ...quotedOrder, qty: 3 })).status, 400, "quote binds ticket count");
     const responses = await Promise.all([
-      post("/api/policies", order),
-      post("/api/policies", order),
+      post("/api/policies", quotedOrder),
+      post("/api/policies", quotedOrder),
     ]);
     for (const r of responses)
       assert.ok(r.status === 200 || r.status === 202, JSON.stringify(r.body));
@@ -186,6 +194,8 @@ async function main() {
     let rows = await policies();
     assert.equal(rows.length, 2);
     const created = rows.find((p) => p.id !== live.id)!;
+    assert.equal(created.premium, quoted.body.quote.options[0].price.premium, "purchase must use exact accepted price");
+    assert.equal((await post("/api/policies", { ...quotedOrder, requestId: randomUUID() })).status, 400, "one quote cannot create two orders");
     assert.equal(created.status, "active");
     assert.equal(created.arc.mode, "simulated");
     assert.equal(created.hedge.mode, "simulated");
@@ -244,8 +254,13 @@ async function main() {
       ).body.settled,
       0,
     );
+    const nextQuote = (await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty })).body.quote;
+    // Quotes are persisted separately from orders and survive process restarts.
+    await stop();
+    await start();
     const second = await post("/api/policies", {
       ...order,
+      quoteId: nextQuote.id,
       requestId: randomUUID(),
     });
     assert.equal(second.status, 200);

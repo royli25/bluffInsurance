@@ -128,7 +128,7 @@ export default function CoverageBuilder({
               </label>
               <div className="mt-4 flex flex-wrap justify-between gap-2 border-t border-neutral-800 pt-3 text-xs text-neutral-500">
                 <span>
-                  Fan pays{" "}
+                  Estimated premium{" "}
                   <strong className="text-neutral-300">{usd(q.premium)}</strong>
                 </span>
                 <span>

@@ -188,7 +188,7 @@ export async function getEventByTicker(ticker: string): Promise<GEvent | null> {
       `${GEMINI_BASE}/v1/prediction-markets/events/${encodeURIComponent(ticker)}`,
       {
         cache: "no-store",
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(4_000),
       },
     );
     if (!res.ok) return null;
@@ -197,4 +197,16 @@ export async function getEventByTicker(ticker: string): Promise<GEvent | null> {
   } catch {
     return null;
   }
+}
+
+/** Checkout waits for fresh event books; catalog rendering stays instant. */
+export async function getPricingMarkets(tickers: string[]): Promise<MarketUniverse> {
+  const cached = await getMarkets();
+  if (process.env.GEMINI_OFFLINE === "1" || !tickers.length)
+    return { ...cached, source: "snapshot" };
+  const fresh = await Promise.all([...new Set(tickers)].map(getEventByTicker));
+  // Never describe an outage fallback or an incomplete refresh as live data.
+  if (fresh.some((e, i) => !e || e.ticker !== [...new Set(tickers)][i]))
+    return { ...cached, source: "snapshot" };
+  return { events: fresh as GEvent[], source: "live", fetchedAt: new Date().toISOString() };
 }

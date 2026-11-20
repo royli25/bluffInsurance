@@ -4,6 +4,7 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import { keccak256, toHex } from "viem";
 import deployment from "./arc/deployment.json";
+import type { CheckoutQuote } from "./checkout-quote";
 import type { TicketEvent } from "./catalog";
 import type { CoverageId, HedgeLeg } from "./coverage";
 import type { HedgeFill } from "./gemini/trading";
@@ -41,6 +42,7 @@ export interface Policy {
   hedge: HedgeFill;
   arc: ArcReceipt;
   status: "pending" | "active" | "settling" | "paid" | "expired";
+  quoteId?: string;
   confirmationMode?: "stream" | "receipt" | "simulated";
   settlementError?: string;
   purchaseError?: string;
@@ -78,6 +80,7 @@ export function openStore(file: string, legacyFile?: string) {
   sql.pragma("synchronous = FULL");
   sql.pragma("busy_timeout = 5000");
   sql.exec(`
+    CREATE TABLE IF NOT EXISTS checkout_quotes (id TEXT PRIMARY KEY, data TEXT NOT NULL, expires_at INTEGER NOT NULL, policy_id TEXT);
     CREATE TABLE IF NOT EXISTS app_state (id INTEGER PRIMARY KEY CHECK(id = 1), data TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS stream_deliveries (
       id TEXT PRIMARY KEY, stream_id TEXT NOT NULL, fingerprint TEXT NOT NULL,
@@ -453,8 +456,20 @@ export function openStore(file: string, legacyFile?: string) {
       const p = read().policies.find((p) => p.id === id);
       return p ? project(p) : undefined;
     },
+    saveQuote: (q: CheckoutQuote) => sql.transaction(() => {
+      sql.prepare("DELETE FROM checkout_quotes WHERE expires_at < ?").run(Date.now() - 86400_000);
+      sql.prepare("INSERT INTO checkout_quotes(id,data,expires_at) VALUES(?,?,?)").run(q.id, JSON.stringify(q), Date.parse(q.expiresAt));
+    }).immediate(),
+    checkoutQuote: (id: string): CheckoutQuote | undefined => {
+      const row = sql.prepare("SELECT data FROM checkout_quotes WHERE id=?").get(id) as { data: string } | undefined;
+      return row ? JSON.parse(row.data) : undefined;
+    },
     addPolicy: (p: Policy) =>
       mutate((d) => {
+        if (p.quoteId) {
+          const claim = sql.prepare("UPDATE checkout_quotes SET policy_id=? WHERE id=? AND policy_id IS NULL AND expires_at>?").run(p.id, p.quoteId, Date.now());
+          if (!claim.changes) throw new Error("Quote expired or already used. Refresh prices before purchasing.");
+        }
         if (d.policies.some((x) => x.id === p.id))
           throw new Error("Duplicate policy id");
         d.policies.push(p);
@@ -534,6 +549,8 @@ export const db = {
   policies: () => currentStore().policies(),
   policy: (id: string) => currentStore().policy(id),
   addPolicy: (p: Policy) => currentStore().addPolicy(p),
+  saveQuote: (q: CheckoutQuote) => currentStore().saveQuote(q),
+  checkoutQuote: (id: string) => currentStore().checkoutQuote(id),
   updatePolicies: (fn: (p: Policy) => Policy) =>
     currentStore().updatePolicies(fn),
   claimSettlement: (ids: string[]) => currentStore().claimSettlement(ids),

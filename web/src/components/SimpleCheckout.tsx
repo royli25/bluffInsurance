@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { EventMarks } from "@/components/TeamMarks";
 import Icon from "@/components/TicketmasterIcon";
 import { usd, usd0, dateParts } from "@/lib/format";
-import { quote, type Coverage } from "@/lib/coverage";
+import type { Coverage } from "@/lib/coverage";
 import type { TicketEvent } from "@/lib/catalog";
+import type { CheckoutQuote } from "@/lib/checkout-quote";
 import type { Policy } from "@/lib/store";
 import styles from "./SimpleCheckout.module.css";
 export default function SimpleCheckout({
@@ -29,28 +30,70 @@ export default function SimpleCheckout({
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const confirmation = useRef<HTMLHeadingElement>(null);
   const tier = event.tiers[tierIndex];
-  const protection = options.find((c) => c.id === protectionId);
+  const [prices, setPrices] = useState<CheckoutQuote | null>(null);
+  const [loadingPrices, setLoadingPrices] = useState(true);
+  const [priceError, setPriceError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  const [now, setNow] = useState(0);
+  const matchingPrices = prices?.tierId === tier.id && prices.qty === quantity ? prices : null;
+  const remaining = matchingPrices ? Math.max(0, Math.ceil((Date.parse(matchingPrices.expiresAt) - now) / 1000)) : 0;
+  const ready = !!matchingPrices && !loadingPrices && !priceError;
+  const currentOptions = matchingPrices?.options.map((o) => o.coverage) ?? options;
+  const protection = currentOptions.find((c) => c.id === protectionId);
   const subtotal = tier.price * quantity;
-  const q = protection
-    ? quote(protection, subtotal, protection.defaultRefundPct)
-    : null;
+  const q = ready ? matchingPrices.options.find((o) => o.coverage.id === protectionId)?.price : undefined;
+  const canPurchase = protectionId === "none" || (ready && remaining > 0 && !!q);
   const total = subtotal + (q?.premium ?? 0);
+  useEffect(() => {
+    if (confirmed) return;
+    if (!options.length) {
+      setLoadingPrices(false);
+      setPriceError("");
+      return;
+    }
+    const controller = new AbortController();
+    setLoadingPrices(true);
+    setPriceError("");
+    fetch("/api/quotes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventId: event.id, tierId: tier.id, qty: quantity, rooting: "home" }),
+      signal: controller.signal,
+    }).then(async (r) => {
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error ?? "Could not fetch protection prices.");
+      if (controller.signal.aborted) return;
+      setNow(Date.now());
+      setPrices(data.quote);
+      setProtectionId((id) => id === "none" || data.quote.options.some((o: { coverage: Coverage }) => o.coverage.id === id) ? id : data.quote.options[0]?.coverage.id ?? "none");
+    }).catch((e) => {
+      if (!controller.signal.aborted) setPriceError(e.message);
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoadingPrices(false);
+    });
+    return () => controller.abort();
+  }, [event.id, tier.id, quantity, refresh, confirmed, options.length]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     if (confirmed) confirmation.current?.focus();
   }, [confirmed]);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (busy) return;
+    if (busy || !canPurchase) return;
     setBusy(true);
     setError("");
     try {
-      if (protection) {
+      if (protectionId !== "none" && q && matchingPrices) {
         const r = await fetch("/api/policies", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             eventId: event.id,
-            coverageId: protection.id,
+            coverageId: protectionId,
+            quoteId: matchingPrices.id,
             rooting: "home",
             tierId: tier.id,
             qty: quantity,
@@ -61,10 +104,10 @@ export default function SimpleCheckout({
           }),
         });
         const data = await r.json();
-        if (!r.ok)
-          throw new Error(
-            data.error ?? "Could not complete the demo checkout.",
-          );
+        if (!r.ok) {
+          if (/quote|refresh|protection changed/i.test(data.error ?? "")) setPriceError(data.error);
+          throw new Error(data.error ?? "Could not complete the demo checkout.");
+        }
         setPolicy(data.policy);
       }
       setConfirmed(true);
@@ -169,6 +212,7 @@ export default function SimpleCheckout({
                   setConfirmed(false);
                   setPolicy(null);
                   setRequestId(crypto.randomUUID());
+                  setPrices(null);
                 }}
               >
                 Try another purchase
@@ -236,15 +280,13 @@ export default function SimpleCheckout({
               <section className={styles.card}>
                 <h2 className={styles.sectionTitle}>
                   <span className={styles.step}>2</span>Choose your protection{" "}
-                  <span className={styles.optional}>Optional</span>
+                  <span className={styles.optional} role="status">
+                    {loadingPrices || !matchingPrices && !priceError ? "Fetching Gemini prices…" : priceError ? "Prices unavailable" : `${prices?.source === "live" ? "Gemini prices" : "Demo estimate"} · ${remaining > 0 ? `0:${String(remaining).padStart(2, "0")}` : "Expired"}`}
+                  </span>
                 </h2>
-                <div className={styles.protectionOptions}>
-                  {options.map((option) => {
-                    const amount = quote(
-                      option,
-                      subtotal,
-                      option.defaultRefundPct,
-                    );
+                <div className={styles.protectionOptions} aria-busy={loadingPrices}>
+                  {currentOptions.map((option) => {
+                    const amount = ready ? matchingPrices.options.find((o) => o.coverage.id === option.id)?.price : undefined;
                     return (
                       <label
                         key={option.id}
@@ -272,7 +314,7 @@ export default function SimpleCheckout({
                           </span>
                         </span>
                         <span className={styles.protectionPrice}>
-                          +{usd(amount.premium)}
+                          {amount ? `+${usd(amount.premium)}` : <span className={styles.priceSkeleton} aria-label="Fetching price" />}
                           <small>for the order</small>
                         </span>
                       </label>
@@ -295,6 +337,9 @@ export default function SimpleCheckout({
                     <span className={styles.protectionPrice}>$0</span>
                   </label>
                 </div>
+                {priceError && <p role="alert" className={styles.error}>{priceError}</p>}
+                {!!options.length && !loadingPrices && (priceError || remaining === 0) && <button type="button" className={styles.refreshPrices} onClick={() => setRefresh((r) => r + 1)}>Refresh prices</button>}
+                {!currentOptions.length && <p role="status" className={styles.finePrint}>Protection isn’t available for this event.</p>}
               </section>
               <section className={styles.card}>
                 <h2 className={styles.sectionTitle}>
@@ -347,7 +392,7 @@ export default function SimpleCheckout({
                 </div>
                 <div>
                   <span>{protection?.name ?? "Protection"}</span>
-                  <span>{q ? usd(q.premium) : "Not added"}</span>
+                  <span>{protectionId === "none" ? "Not added" : q ? usd(q.premium) : "—"}</span>
                 </div>
                 {q && (
                   <div className={styles.payout}>
@@ -357,7 +402,7 @@ export default function SimpleCheckout({
                 )}
                 <div className={styles.total}>
                   <strong>Total</strong>
-                  <strong>{usd(total)}</strong>
+                  <strong>{protectionId === "none" || q ? usd(total) : "—"}</strong>
                 </div>
               </div>
               <div className={styles.payment}>
@@ -372,7 +417,7 @@ export default function SimpleCheckout({
                   {error}
                 </p>
               )}
-              <button className={styles.primary} disabled={busy} type="submit">
+              <button className={styles.primary} disabled={busy || !canPurchase} type="submit">
                 {busy ? "Creating your contract…" : "Complete demo purchase"}
                 <Icon name="arrow-right" className={styles.icon} />
               </button>

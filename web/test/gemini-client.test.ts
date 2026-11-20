@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { setImmediate } from "node:timers/promises";
-import { getMarkets } from "../src/lib/gemini/client";
+import { getMarkets, getPricingMarkets } from "../src/lib/gemini/client";
 
 test("cold pages and quotes render before Gemini completes, then share live refreshes across reloads", async (t) => {
   let now = Date.now();
@@ -121,5 +121,39 @@ test("cold pages and quotes render before Gemini completes, then share live refr
     release?.();
     if (previousOffline === undefined) delete process.env.GEMINI_OFFLINE;
     else process.env.GEMINI_OFFLINE = previousOffline;
+  }
+});
+
+test("checkout bypasses catalog cache for fresh books and labels outage/offline fallbacks", async (t) => {
+  const offline = process.env.GEMINI_OFFLINE;
+  delete process.env.GEMINI_OFFLINE;
+  let price = "0.40";
+  let fail = false;
+  let requests = 0;
+  t.mock.method(globalThis, "fetch", async (url: string, init?: RequestInit) => {
+    assert.ok(String(url).endsWith("/events/QUOTE-TEST"));
+    assert.equal(init?.cache, "no-store");
+    assert.ok(init?.signal);
+    requests++;
+    if (fail) return new Response("unavailable", { status: 503 });
+    return Response.json({ data: { id: "quote", ticker: "QUOTE-TEST", contracts: [{ prices: { buy: { yes: price } } }] } });
+  });
+  try {
+    const first = await getPricingMarkets(["QUOTE-TEST", "QUOTE-TEST"]);
+    assert.equal(first.source, "live");
+    assert.equal(first.events[0].contracts[0].prices.buy?.yes, "0.40");
+    assert.equal(requests, 1, "duplicate hedge tickers share a request");
+    price = "0.55";
+    const second = await getPricingMarkets(["QUOTE-TEST"]);
+    assert.equal(second.events[0].contracts[0].prices.buy?.yes, "0.55", "new quote must fetch the changed price");
+    fail = true;
+    assert.equal((await getPricingMarkets(["QUOTE-TEST"])).source, "snapshot");
+    process.env.GEMINI_OFFLINE = "1";
+    const before = requests;
+    assert.equal((await getPricingMarkets(["QUOTE-TEST"])).source, "snapshot");
+    assert.equal(requests, before);
+  } finally {
+    if (offline === undefined) delete process.env.GEMINI_OFFLINE;
+    else process.env.GEMINI_OFFLINE = offline;
   }
 });
