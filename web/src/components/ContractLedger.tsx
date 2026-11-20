@@ -28,7 +28,7 @@ export default function ContractLedger({
         className="w-full min-w-[760px] text-left text-sm"
         aria-label="Contract ledger"
       >
-        <thead className="border-b border-neutral-800 text-xs text-neutral-500">
+        <thead className="bg-neutral-800/40 text-xs text-neutral-500">
           <tr>
             {[
               "Started",
@@ -53,7 +53,7 @@ export default function ContractLedger({
           {policies.map((p) => (
             <tr
               key={p.id}
-              className="border-b border-neutral-800/70 last:border-0 hover:bg-white/[.025]"
+              className="odd:bg-white/[.015] hover:bg-white/[.04]"
             >
               <td className="whitespace-nowrap px-5 py-4 text-neutral-400">
                 <time dateTime={p.createdAt}>
@@ -89,9 +89,7 @@ export default function ContractLedger({
                   <span className="h-1 w-1 rounded-full bg-current" />
                   {contractStatus(p)}
                 </span>
-                {p.arc.mode === "simulated" && p.status !== "paid" && (
-                  <span className="ml-2 text-xs text-neutral-600">Demo</span>
-                )}
+
               </td>
               <td className="px-5 py-4">
                 <Link

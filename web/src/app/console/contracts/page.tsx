@@ -21,7 +21,7 @@ export default async function Contracts({
       <header>
         <h1 className="text-xl font-semibold tracking-tight">Contracts</h1>
       </header>
-      <section className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/40">
+      <section className="overflow-hidden rounded-lg bg-neutral-900">
         <form
           action="/console/contracts"
           className="flex flex-wrap items-center gap-3 border-b border-neutral-800 p-5"

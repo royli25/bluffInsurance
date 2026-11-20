@@ -9,3 +9,7 @@
 - Use Untitled UI interface icons through the existing icon component.
 - Keep Gemini orders, Arc transactions and QuickNode evidence inside contract details or Integrations.
 - Treat the customer checkout as one step in the business demo. Do not add a storefront browsing layer.
+
+- Separate panels with surface shades and spacing. Avoid decorative panel strokes and nested outlines; retain focus outlines and necessary input affordances.
+- Use sourced provider wordmarks with preserved proportions. Gemini belongs with pricing; Arc and Quicknode belong with settlement and integration evidence.
+- Use product language throughout the visible interface. No demo, simulation, hackathon, or placeholder-payment copy. Technical evidence must still accurately say when a transaction has not been submitted.

@@ -130,7 +130,7 @@ async function main() {
     const draft = await (
       await fetch(origin + `/demo/checkout?event=${eventId}`)
     ).text();
-    assert.ok(draft.includes("Protection is not published yet") || draft.includes("Choose your protection"), draft.slice(0, 500) + output);
+    assert.ok(draft.includes("Protection is not published yet") || draft.includes("Pricing by"), draft.slice(0, 500) + output);
     assert.equal((await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty })).status, 400, "unpublished protection cannot be quoted");
     assert.equal((await post("/api/policies", order)).status, 400);
     assert.equal(
@@ -161,7 +161,7 @@ async function main() {
     const checkout = await (
       await fetch(origin + `/demo/checkout?event=${eventId}`)
     ).text();
-    assert.ok(checkout.includes("Complete demo purchase"));
+    assert.ok(checkout.includes("Confirm order"));
     assert.equal(
       (
         await post("/api/policies", {
@@ -211,7 +211,7 @@ async function main() {
     const detail = await (
       await fetch(origin + `/console/contracts/${created.id}`)
     ).text();
-    assert.ok(detail.includes("Resolve demo outcome"));
+    assert.ok(detail.includes("Resolve outcome"));
     assert.ok(detail.includes("Gemini hedge"));
     assert.ok(
       !detail.includes(`href="${created.arc.explorerUrl}"`),
@@ -241,7 +241,7 @@ async function main() {
     assert.ok(
       (
         await (await fetch(origin + `/console/contracts/${created.id}`)).text()
-      ).includes("Demo paid out"),
+      ).includes("Paid out"),
     );
     assert.equal(
       (

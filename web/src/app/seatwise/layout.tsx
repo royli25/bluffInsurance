@@ -3,7 +3,7 @@ import "./ticketmaster.css";
 export const metadata: Metadata = {
   title: "Ticketmaster + Bluff Protect",
   description:
-    "Discover live events and add automatic ticket protection with Bluff. Independent interface demo.",
+    "Discover live events and add automatic ticket protection with Bluff.",
 };
 export default function StorefrontLayout({
   children,

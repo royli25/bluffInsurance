@@ -278,7 +278,7 @@ export async function settle(
     .filter((p) => !demoOnly || p.arc.mode === "simulated");
   if (!targets.length) return { settled: 0 };
   if (new Set(targets.map((p) => p.arc.mode)).size > 1)
-    throw new Error("Resolve demo and live contracts separately.");
+    throw new Error("Resolve connected and offline contracts separately.");
   if (!db.claimSettlement(targets.map((p) => p.id)))
     throw new Error(
       "Settlement is already being processed. Wait for chain confirmation.",

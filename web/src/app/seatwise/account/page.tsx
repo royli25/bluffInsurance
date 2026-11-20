@@ -162,7 +162,7 @@ export default async function Account({
                   {p.status === "paid" && (
                     <small>
                       {p.arc.mode === "simulated"
-                        ? "Demo refund recorded "
+                        ? "Refund recorded "
                         : "Arc payout confirmed "}
                       {p.settledAt &&
                         new Date(p.settledAt).toLocaleString("en-US", {

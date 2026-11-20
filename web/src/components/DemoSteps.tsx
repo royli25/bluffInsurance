@@ -31,7 +31,7 @@ export default function DemoSteps({
   return (
     <ol
       aria-label="Demo flow"
-      className="flex flex-wrap items-center gap-5 border-b border-neutral-800 pb-5"
+      className="flex flex-wrap items-center gap-5 rounded-lg bg-neutral-900 px-5 py-4"
     >
       {steps.map((s, i) => (
         <li key={s.label}>

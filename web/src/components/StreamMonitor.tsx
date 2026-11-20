@@ -109,7 +109,7 @@ export default function StreamMonitor({
       {!health.configured && (
         <p className="text-sm text-neutral-400">
           Connect an Arc testnet Stream to confirm policies and payouts from
-          vault events. Simulated transactions are not counted as onchain
+          vault events. Unsubmitted transactions are not counted as onchain
           confirmations.
         </p>
       )}

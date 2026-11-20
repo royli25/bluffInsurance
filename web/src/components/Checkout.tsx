@@ -197,7 +197,7 @@ export default function Checkout({
                   <Icon name="check-circle" />
                 </label>
                 <p className="tm-saved-card-note">
-                  <Icon name="lock-01" /> Saved payment method · Demo checkout
+                  <Icon name="lock-01" /> Saved payment method
                 </p>
                 <div className="tm-payment-divider" />
                 <h3>Or Pay With</h3>
@@ -209,7 +209,7 @@ export default function Checkout({
                         key={wallet}
                         onClick={() =>
                           setPaymentNotice(
-                            `${wallet} is not connected in this demo. Use the saved demo Visa to continue.`,
+                            `${wallet} is not connected. Choose another payment method.`,
                           )
                         }
                       >
@@ -520,7 +520,7 @@ export default function Checkout({
         </aside>
       </main>
       <footer className="tm-checkout-footer">
-        <Icon name="lock-01" /> Secure checkout · Independent Bluff demo
+        <Icon name="lock-01" /> Protected by Bluff
         <Link href="/seatwise/account">My Tickets</Link>
         <Link href="/console">Bluff Console</Link>
       </footer>

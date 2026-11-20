@@ -43,7 +43,7 @@ export default async function EventConfig({
             </p>
           </div>
           <span
-            className={`rounded-full border px-3 py-1.5 text-xs ${offer.published ? "border-emerald-900 text-emerald-300" : "border-neutral-800 text-neutral-500"}`}
+            className={`rounded-full px-3 py-1.5 text-xs ${offer.published ? "bg-emerald-400/10 text-emerald-300" : "bg-neutral-800 text-neutral-400"}`}
           >
             {offer.published ? "Protection published" : "Draft"}
           </span>
@@ -79,7 +79,7 @@ export default async function EventConfig({
           )}
         />
       </div>
-      <section className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/40">
+      <section className="overflow-hidden rounded-lg bg-neutral-900">
         <div className="flex items-center justify-between gap-3 px-5 py-5">
           <h2 className="font-semibold">Event contracts</h2>
           <Link
@@ -91,7 +91,7 @@ export default async function EventConfig({
         </div>
         <ContractLedger policies={policies} />
       </section>
-      <details className="rounded-lg border border-neutral-800 p-5 text-xs text-neutral-500">
+      <details className="rounded-lg bg-neutral-900 p-5 text-xs text-neutral-500">
         <summary className="cursor-pointer">
           Matching prediction markets · {markets.length}
         </summary>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { EventMarks } from "@/components/TeamMarks";
 import Icon from "@/components/TicketmasterIcon";
+import ProviderLogo from "@/components/ProviderLogo";
 import { usd, usd0, dateParts } from "@/lib/format";
 import type { Coverage } from "@/lib/coverage";
 import type { TicketEvent } from "@/lib/catalog";
@@ -106,7 +107,7 @@ export default function SimpleCheckout({
         const data = await r.json();
         if (!r.ok) {
           if (/quote|refresh|protection changed/i.test(data.error ?? "")) setPriceError(data.error);
-          throw new Error(data.error ?? "Could not complete the demo checkout.");
+          throw new Error(data.error ?? "Could not confirm your order.");
         }
         setPolicy(data.policy);
       }
@@ -123,7 +124,6 @@ export default function SimpleCheckout({
         <Link href="/console" className={styles.brand}>
           bluff<span>checkout</span>
         </Link>
-        <span className={styles.demoLabel}>Demo · no charge</span>
         <Link href={`/console/events/${event.id}`} className={styles.backLink}>
           Back to event <Icon name="arrow-right" className={styles.icon} />
         </Link>
@@ -175,7 +175,7 @@ export default function SimpleCheckout({
               {policy && (
                 <>
                   <div>
-                    <span>Contract</span>
+                    <span>Protection reference</span>
                     <strong className={styles.contractId}>
                       {policy.id.replace("pol_demo_", "").toUpperCase()}
                     </strong>
@@ -188,9 +188,8 @@ export default function SimpleCheckout({
             </div>
             <p className={styles.finePrint}>
               {policy
-                ? "Demo contract saved."
-                : "No protection contract was created."}{" "}
-              No charge.
+                ? "Your protection is saved."
+                : "Tickets selected without protection."}{" "}
             </p>
             <div className={styles.confirmationActions}>
               {policy && (
@@ -228,7 +227,7 @@ export default function SimpleCheckout({
             >
               <section className={styles.card}>
                 <h2 className={styles.sectionTitle}>
-                  <span className={styles.step}>1</span>Choose your tickets
+                  <span className={styles.step}>1</span>Tickets
                 </h2>
                 <div className={styles.tiers}>
                   {event.tiers.map((option, index) => (
@@ -279,10 +278,8 @@ export default function SimpleCheckout({
               </section>
               <section className={styles.card}>
                 <h2 className={styles.sectionTitle}>
-                  <span className={styles.step}>2</span>Choose your protection{" "}
-                  <span className={styles.optional} role="status">
-                    {loadingPrices || !matchingPrices && !priceError ? "Fetching Gemini prices…" : priceError ? "Prices unavailable" : `${prices?.source === "live" ? "Gemini prices" : "Demo estimate"} · ${remaining > 0 ? `0:${String(remaining).padStart(2, "0")}` : "Expired"}`}
-                  </span>
+                  <span className={styles.step}>2</span>Protection{" "}
+                  <span className={styles.pricingProvider}>Pricing by <ProviderLogo provider="gemini" /></span>
                 </h2>
                 <div className={styles.protectionOptions} aria-busy={loadingPrices}>
                   {currentOptions.map((option) => {
@@ -306,12 +303,7 @@ export default function SimpleCheckout({
                               {option.defaultRefundPct}% back
                             </span>
                           </strong>
-                          <span>
-                            If {option.trigger}.{" "}
-                            {option.hedgeType === "partial"
-                              ? "Partially hedged; reserves cover the remaining risk."
-                              : ""}
-                          </span>
+                          <span>If {option.trigger}.</span>
                         </span>
                         <span className={styles.protectionPrice}>
                           {amount ? `+${usd(amount.premium)}` : <span className={styles.priceSkeleton} aria-label="Fetching price" />}
@@ -337,6 +329,12 @@ export default function SimpleCheckout({
                     <span className={styles.protectionPrice}>$0</span>
                   </label>
                 </div>
+                {options.length > 0 && <div className={styles.quoteStatus}>
+                  <span aria-live={loadingPrices ? "polite" : "off"} role="status">
+                    <span className={`${styles.connectionDot} ${ready && prices?.source === "live" ? styles.liveDot : ""}`} />
+                    {loadingPrices || !matchingPrices && !priceError ? "Updating prices…" : priceError ? "Prices unavailable" : `${prices?.source === "live" ? "Live price" : "Estimated price"} · ${remaining > 0 ? `Valid for 0:${String(remaining).padStart(2, "0")}` : "Expired"}`}
+                  </span>
+                </div>}
                 {priceError && <p role="alert" className={styles.error}>{priceError}</p>}
                 {!!options.length && !loadingPrices && (priceError || remaining === 0) && <button type="button" className={styles.refreshPrices} onClick={() => setRefresh((r) => r + 1)}>Refresh prices</button>}
                 {!currentOptions.length && <p role="status" className={styles.finePrint}>Protection isn’t available for this event.</p>}
@@ -405,32 +403,22 @@ export default function SimpleCheckout({
                   <strong>{protectionId === "none" || q ? usd(total) : "—"}</strong>
                 </div>
               </div>
-              <div className={styles.payment}>
-                <Icon name="credit-card-01" className={styles.icon} />
-                <div>
-                  <strong>Demo Visa ending in 4242</strong>
-                  <span>No payment is processed</span>
-                </div>
-              </div>
               {error && (
                 <p role="alert" className={styles.error}>
                   {error}
                 </p>
               )}
               <button className={styles.primary} disabled={busy || !canPurchase} type="submit">
-                {busy ? "Creating your contract…" : "Complete demo purchase"}
+                {busy ? "Confirming your order…" : "Confirm order"}
                 <Icon name="arrow-right" className={styles.icon} />
               </button>
-              <p className={styles.noCharge}>
-                <Icon name="lock-01" className={styles.icon} />
-                Demo only. You won’t be charged.
-              </p>
             </aside>
           </form>
         )}
       </main>
       <footer className={styles.footer}>
-        Ticket protection, powered by Bluff.<span>Hackathon demo</span>
+        <span className={styles.footerBrand}>bluff</span>
+        <div className={styles.providerRow}><span>Built with</span><ProviderLogo provider="gemini" /><ProviderLogo provider="arc" /><ProviderLogo provider="quicknode" /></div>
       </footer>
     </div>
   );

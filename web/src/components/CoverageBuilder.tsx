@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import ProviderLogo from "@/components/ProviderLogo";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TicketEvent } from "@/lib/catalog";
@@ -53,10 +54,11 @@ export default function CoverageBuilder({
     }
   }
   return (
-    <section className="rounded-lg border border-neutral-800 p-5 sm:p-6">
+    <section className="rounded-lg bg-neutral-900 p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+        <div className="flex flex-wrap items-center gap-5">
           <h2 className="font-semibold">Protection options</h2>
+          <ProviderLogo provider="gemini" dark />
         </div>
         <select
           aria-label="Preview ticket tier"
@@ -84,7 +86,7 @@ export default function CoverageBuilder({
           return (
             <div
               key={c.id}
-              className={`rounded-lg border p-4 ${st.enabled ? "border-neutral-600 bg-neutral-900/60" : "border-neutral-800"}`}
+              className={`rounded-md p-4 ${st.enabled ? "bg-neutral-800/80" : "bg-neutral-800/30"}`}
             >
               <label className="flex cursor-pointer items-start gap-3">
                 <input
@@ -126,7 +128,7 @@ export default function CoverageBuilder({
                   className="min-w-0 flex-1 accent-neutral-300"
                 />
               </label>
-              <div className="mt-4 flex flex-wrap justify-between gap-2 border-t border-neutral-800 pt-3 text-xs text-neutral-500">
+              <div className="mt-4 flex flex-wrap justify-between gap-2 pt-3 text-xs text-neutral-500">
                 <span>
                   Estimated premium{" "}
                   <strong className="text-neutral-300">{usd(q.premium)}</strong>
@@ -169,7 +171,7 @@ export default function CoverageBuilder({
             href={`/demo/checkout?event=${ev.id}`}
             className="rounded-md border border-neutral-700 px-4 py-2.5 text-sm hover:bg-neutral-800"
           >
-            Open demo checkout →
+            Open checkout →
           </Link>
         )}
         {published && (

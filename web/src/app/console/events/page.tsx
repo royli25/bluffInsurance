@@ -50,7 +50,7 @@ export default async function Events({
         )}
       </header>
       {adding && (
-        <section className="rounded-lg border border-neutral-800 p-5 sm:p-6">
+        <section className="rounded-lg bg-neutral-900 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="font-semibold">Choose an event to protect</h2>
@@ -81,7 +81,7 @@ export default async function Events({
               <Link
                 key={ev.id}
                 href={`/console/events/${ev.id}`}
-                className="flex items-center gap-4 rounded-lg border border-neutral-800 bg-neutral-900/50 p-4 hover:border-neutral-600"
+                className="flex items-center gap-4 rounded-lg bg-neutral-800/50 p-4 hover:bg-neutral-800"
               >
                 <EventMarks ev={ev} />
                 <div className="min-w-0">
@@ -110,7 +110,7 @@ export default async function Events({
         </section>
       )}
       {managed.length > 0 && (
-        <section className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/40">
+        <section className="overflow-hidden rounded-lg bg-neutral-900">
           <div className="px-5 py-5 font-semibold">
             Your events{" "}
             <span className="ml-2 text-xs font-normal text-neutral-600">

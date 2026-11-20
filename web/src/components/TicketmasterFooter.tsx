@@ -94,7 +94,7 @@ export default function TicketmasterFooter() {
           <a href="https://privacy.ticketmaster.com/">Privacy Policy</a> ·{" "}
           <a href="https://privacy.ticketmaster.com/">Cookie Policy</a>
         </span>
-        <span>Independent interface demo with Bluff Protect.</span>
+        <span>Ticket protection by Bluff.</span>
       </div>
     </footer>
   );

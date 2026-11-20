@@ -23,9 +23,7 @@ export function contractStatus(policy: Pick<Policy, "status" | "arc">) {
     paid: "Paid out",
     expired: "Completed",
   };
-  return policy.arc.mode === "simulated" && policy.status === "paid"
-    ? "Demo paid out"
-    : labels[policy.status];
+  return labels[policy.status];
 }
 export function filterContracts(
   policies: Policy[],

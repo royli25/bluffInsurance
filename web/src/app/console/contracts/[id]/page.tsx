@@ -30,15 +30,14 @@ export default async function Contract({
         </Link>
         <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="mb-2 font-mono text-xs text-neutral-600">{p.id}</p>
+            <p className="mb-2 font-mono text-xs text-neutral-600">{p.id.replace(/^pol_demo_/, "").toUpperCase()}</p>
             <h1 className="text-xl font-semibold tracking-tight">
               {p.coverageName}
             </h1>
             <p className="mt-2 text-neutral-400">{p.eventTitle}</p>
           </div>
-          <span className="rounded-full border border-neutral-700 px-3 py-1.5 text-xs">
+          <span className="rounded-full bg-neutral-800 px-3 py-1.5 text-xs">
             {contractStatus(p)}
-            {simulated && p.status !== "paid" ? " · Demo" : ""}
           </span>
         </div>
       </header>
@@ -53,14 +52,14 @@ export default async function Contract({
         ].map(([label, value]) => (
           <div
             key={label}
-            className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-5"
+            className="rounded-lg bg-neutral-900 p-5"
           >
             <p className="text-xs text-neutral-500">{label}</p>
             <p className="mt-3 text-xl font-semibold">{value}</p>
           </div>
         ))}
       </section>
-      <section className="rounded-lg border border-neutral-800 p-6">
+      <section className="rounded-lg bg-neutral-900 p-6">
         <h2 className="font-semibold">Protection</h2>
         <p className="mt-3 text-neutral-300">
           If {p.trigger}, the customer gets {usd(p.payout)} back.
@@ -70,7 +69,7 @@ export default async function Contract({
           ticket order.
         </p>
       </section>
-      <section className="rounded-lg border border-neutral-800 p-6">
+      <section className="rounded-lg bg-neutral-900 p-6">
         <h2 className="font-semibold">Contract activity</h2>
         <ol className="mt-5 space-y-5">
           {[
@@ -89,7 +88,7 @@ export default async function Contract({
                   ? ""
                   : p.createdAt,
               simulated
-                ? "Simulated Arc policy and hedge order"
+                ? "Execution not connected"
                 : p.chain?.purchase
                   ? "Purchase confirmed by QuickNode Streams"
                   : "Arc receipt recorded",
@@ -104,7 +103,7 @@ export default async function Contract({
                     : "Awaiting event outcome",
               p.settledAt ?? "",
               p.status === "paid"
-                ? `${usd(p.payout)} ${simulated ? "demo payout recorded" : "coverage settled on Arc"}`
+                ? `${usd(p.payout)} ${simulated ? "payout recorded" : "coverage settled on Arc"}`
                 : p.status === "expired"
                   ? "The protected outcome did not happen"
                   : "The contract follows the selected event outcome",
@@ -143,17 +142,17 @@ export default async function Contract({
             href={`/console/events/${p.eventId}#resolve`}
             className="mt-6 inline-flex rounded-md bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-950"
           >
-            {simulated ? "Resolve demo outcome" : "View event settlement"} →
+            {simulated ? "Resolve outcome" : "View event settlement"} →
           </Link>
         )}
       </section>
-      <details className="rounded-lg border border-neutral-800 p-6">
+      <details className="rounded-lg bg-neutral-900 p-6">
         <summary className="cursor-pointer font-semibold">
           Hedge & transaction evidence
         </summary>
         <div className="mt-6 space-y-6 text-sm">
           <section>
-            <h3 className="text-neutral-300">Gemini hedge · {p.hedge.mode}</h3>
+            <h3 className="text-neutral-300">Gemini hedge · {p.hedge.mode === "simulated" ? "Not submitted" : "Submitted"}</h3>
             <p className="mt-2 break-all font-mono text-xs text-neutral-500">
               {p.hedge.order.quantity} {p.hedge.order.outcome.toUpperCase()} ·{" "}
               {p.hedge.order.symbol} @ {p.hedge.order.price}
@@ -166,11 +165,10 @@ export default async function Contract({
             </p>
           </section>
           <section>
-            <h3 className="text-neutral-300">Arc policy · {p.arc.mode}</h3>
+            <h3 className="text-neutral-300">Arc policy · {simulated ? "Not submitted" : "Submitted"}</h3>
             {simulated ? (
               <p className="mt-2 text-xs leading-6 text-neutral-500">
-                Demo transactions do not move money and are not blockchain
-                confirmations.
+                No blockchain transaction has been submitted.
               </p>
             ) : (
               <div className="mt-2 flex flex-wrap gap-4 text-xs text-emerald-300">
@@ -200,7 +198,7 @@ export default async function Contract({
             ) : (
               <p className="mt-3 text-xs text-neutral-600">
                 {simulated
-                  ? "QuickNode evidence is available for real Arc transactions only."
+                  ? "No matching Arc transaction."
                   : "Waiting for matching vault event evidence."}
               </p>
             )}
