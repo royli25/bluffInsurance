@@ -319,9 +319,11 @@ export default function SimpleCheckout({
                           </strong>
                           <span>If {option.trigger}.</span>
                         </span>
-                        <span className={styles.protectionPrice}>
-                          {amount ? `+${usd(amount.premium)}` : <span className={styles.priceSkeleton} aria-label="Fetching price" />}
-                          <small>for the order</small>
+                        <span className={styles.protectionPurchase}>
+                          <span className={styles.protectionPrice}>
+                            {amount ? `+${usd(amount.premium)}` : <span className={styles.priceSkeleton} aria-label="Fetching price" />}
+                            <small>for the order</small>
+                          </span>
                           <span className={styles.protectionProvider}>
                             <span>Powered by</span>
                             <span className={styles.geminiChip}><ProviderLogo provider="gemini" dark /></span>
