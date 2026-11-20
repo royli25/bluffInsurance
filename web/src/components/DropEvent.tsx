@@ -28,29 +28,28 @@ export default function DropEvent() {
   }
 
   return (
-    <section className="rounded-xl border border-emerald-500/40 bg-emerald-500/5 p-4">
-      <h2 className="font-semibold">Drop an event</h2>
-      <p className="text-xs text-zinc-400">Describe your event; we scan every active Gemini market and find the ones that can hedge it.</p>
+    <section className="rounded-lg bg-neutral-900 p-4">
+      <h2 className="text-base">Drop an event</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         {(["sports", "concert"] as const).map((k) => (
-          <button key={k} onClick={() => { setKind(k); setMatches(null); }} className={`rounded-full px-3 py-1 text-sm ${kind === k ? "bg-emerald-500 font-semibold text-black" : "bg-zinc-800 text-zinc-300"}`}>{k === "sports" ? "🏟️ Game" : "🎤 Outdoor concert"}</button>
+          <button key={k} onClick={() => { setKind(k); setMatches(null); }} className={`rounded-md px-3 py-1.5 ${kind === k ? "bg-neutral-100 text-neutral-950" : "bg-neutral-800 text-neutral-300"}`}>{k === "sports" ? "Game" : "Outdoor concert"}</button>
         ))}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={kind === "sports" ? "e.g. Warriors vs Celtics" : "Artist / show name"} className="min-w-60 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm" />
-        {kind === "concert" && <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="City (e.g. Austin)" className="w-48 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm" />}
-        <button onClick={scan} disabled={busy || !query} className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-black disabled:opacity-50">{busy ? "Scanning…" : "Scan Gemini markets"}</button>
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={kind === "sports" ? "Warriors vs Celtics" : "Artist or show"} className="min-w-60 flex-1 rounded-md bg-neutral-800 px-3 py-2 placeholder:text-neutral-500" />
+        {kind === "concert" && <input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="City" className="w-48 rounded-md bg-neutral-800 px-3 py-2 placeholder:text-neutral-500" />}
+        <button onClick={scan} disabled={busy || !query} className="rounded-md bg-neutral-100 px-4 py-2 font-semibold text-neutral-950 disabled:opacity-40">{busy ? "Scanning" : "Scan Gemini markets"}</button>
       </div>
       {matches && (
         <div className="mt-3 space-y-2">
-          {matches.length === 0 && <div className="text-sm text-amber-300">No hedgeable Gemini markets found for that event.</div>}
+          {matches.length === 0 && <div className="text-amber-300">No hedgeable Gemini markets found.</div>}
           {matches.map((m) => (
-            <div key={m.ticker} className="flex flex-wrap items-center gap-3 rounded-lg bg-zinc-900 px-3 py-2 text-sm">
+            <div key={m.ticker} className="flex flex-wrap items-center gap-3 rounded-md bg-neutral-800 px-3 py-2">
               <div>
-                <div className="font-medium">{m.title}</div>
-                <div className="font-mono text-[11px] text-zinc-500">{m.ticker} · {m.related} related markets · {new Date(m.startTime).toLocaleString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} CT</div>
+                <div>{m.title}</div>
+                <div className="font-mono text-neutral-400">{m.ticker}, {new Date(m.startTime).toLocaleString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} CT</div>
               </div>
-              <button onClick={() => create(m)} className="ml-auto rounded bg-zinc-100 px-3 py-1 text-xs font-bold text-black">Use this → build coverage</button>
+              <button onClick={() => create(m)} className="ml-auto rounded-md bg-neutral-100 px-3 py-1.5 text-neutral-950">Build coverage</button>
             </div>
           ))}
         </div>

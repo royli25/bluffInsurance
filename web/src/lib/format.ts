@@ -6,7 +6,7 @@ const TZ = "America/Chicago";
 export const dateParts = (iso: string) => {
   const d = new Date(iso);
   return {
-    mon: d.toLocaleString("en-US", { month: "short", timeZone: TZ }).toUpperCase(),
+    mon: d.toLocaleString("en-US", { month: "short", timeZone: TZ }),
     day: d.toLocaleString("en-US", { day: "numeric", timeZone: TZ }),
     dow: d.toLocaleString("en-US", { weekday: "short", timeZone: TZ }),
     time: d.toLocaleString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ }),

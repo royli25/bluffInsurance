@@ -18,25 +18,22 @@ export default async function Events() {
   }));
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Events</h1>
+      <h1 className="text-xl font-semibold">Events</h1>
       <DropEvent />
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase text-zinc-500">
-            <tr className="border-b border-zinc-800"><th className="px-4 py-2">Event</th><th className="px-4 py-2">When</th><th className="px-4 py-2">Gemini markets</th><th className="px-4 py-2">Coverages</th><th className="px-4 py-2">Checkout</th><th /></tr>
+      <div className="overflow-x-auto rounded-lg bg-neutral-900">
+        <table className="w-full">
+          <thead className="text-left text-neutral-400">
+            <tr><th className="px-4 py-3 font-normal">Event</th><th className="px-4 py-3 font-normal">When</th><th className="px-4 py-3 font-normal">Markets</th><th className="px-4 py-3 font-normal">Covers</th><th className="px-4 py-3 font-normal">Checkout</th><th /></tr>
           </thead>
           <tbody>
             {rows.map(({ ev, markets, covs, published }) => (
-              <tr key={ev.id} className="border-b border-zinc-900 hover:bg-zinc-900/50">
-                <td className="px-4 py-2">
-                  <div className="font-medium">{ev.custom && <span className="mr-1 rounded bg-emerald-500/20 px-1.5 text-[10px] text-emerald-300">NEW</span>}{ev.title}</div>
-                  <div className="text-xs text-zinc-500">{ev.league} · {ev.venue}</div>
-                </td>
-                <td className="px-4 py-2 text-zinc-400">{dateParts(ev.startTime).long}</td>
-                <td className="px-4 py-2">{markets}</td>
-                <td className="px-4 py-2">{covs}</td>
-                <td className="px-4 py-2">{published && covs ? <span className="text-emerald-400">● live</span> : <span className="text-zinc-500">off</span>}</td>
-                <td className="px-4 py-2 text-right"><Link className="text-emerald-400 hover:underline" href={`/console/events/${ev.id}`}>Configure →</Link></td>
+              <tr key={ev.id} className="border-t border-neutral-800 hover:bg-neutral-800/60">
+                <td className="px-4 py-3">{ev.title}{ev.custom && <span className="ml-2 rounded-md bg-neutral-700 px-1.5 py-0.5 text-neutral-200">New</span>}</td>
+                <td className="px-4 py-3 text-neutral-400">{dateParts(ev.startTime).long}</td>
+                <td className="px-4 py-3">{markets}</td>
+                <td className="px-4 py-3">{covs}</td>
+                <td className="px-4 py-3">{published && covs ? <span className="text-emerald-400">Live</span> : <span className="text-neutral-500">Off</span>}</td>
+                <td className="px-4 py-3 text-right"><Link className="text-neutral-300 hover:text-white" href={`/console/events/${ev.id}`}>Configure</Link></td>
               </tr>
             ))}
           </tbody>

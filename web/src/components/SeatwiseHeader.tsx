@@ -4,7 +4,7 @@ export default function SeatwiseHeader() {
   return (
     <header className="bg-[#024ddf] text-white">
       <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3">
-        <Link href="/seatwise" className="text-2xl font-black italic tracking-tight">seatwise</Link>
+        <Link href="/seatwise" className="text-xl font-semibold">seatwise</Link>
         <nav className="hidden gap-5 text-sm font-semibold md:flex">
           <span>Concerts</span><span>Sports</span><span>Arts &amp; Theater</span><span>Family</span>
         </nav>
@@ -13,7 +13,7 @@ export default function SeatwiseHeader() {
         </div>
       </div>
       <div className="mx-auto max-w-6xl px-4 pb-4">
-        <div className="flex overflow-hidden rounded bg-white text-sm text-zinc-500">
+        <div className="flex overflow-hidden rounded bg-white text-sm text-neutral-500">
           <div className="border-r px-3 py-2.5">📍 All of US</div>
           <div className="border-r px-3 py-2.5">📅 All Dates</div>
           <div className="flex-1 px-3 py-2.5">Search for artists, venues, and events</div>

@@ -19,13 +19,10 @@ export default async function Scanner() {
   const cats = rows.reduce<Record<string, number>>((m, r) => ((m[r.league] = (m[r.league] ?? 0) + 1), m), {});
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Market Scanner</h1>
-        <p className="text-sm text-zinc-500">Every active Gemini prediction market ({u.source}, {rows.length} events, {rows.reduce((s, r) => s + r.contracts, 0).toLocaleString()} contracts). Bluff indexes these to find hedges for any live event.</p>
-      </div>
-      <div className="flex flex-wrap gap-2 text-xs">
+      <h1 className="text-xl font-semibold">Market scanner</h1>
+      <div className="flex flex-wrap gap-2">
         {Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
-          <span key={k} className="rounded-full bg-zinc-800 px-2.5 py-1">{k} <b>{v}</b></span>
+          <span key={k} className="rounded-md bg-neutral-900 px-2.5 py-1 text-neutral-300">{k} {v}</span>
         ))}
       </div>
       <ScannerTable rows={rows} />

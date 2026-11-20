@@ -27,14 +27,13 @@ export default async function Seatwise() {
     <div className="min-h-screen bg-white">
       <SeatwiseHeader />
       {hero && (
-        <Link href={`/seatwise/event/${hero.id}`} className="block" style={{ background: `linear-gradient(110deg, ${hero.heroFrom}, #0b1020 55%, ${hero.heroTo})` }}>
+        <Link href={`/seatwise/event/${hero.id}`} className="block bg-neutral-900">
           <div className="mx-auto max-w-6xl px-4 py-12 text-white">
-            <div className="text-xs font-bold uppercase tracking-widest text-white/70">Featured · {hero.subtitle}</div>
-            <h1 className="mt-2 text-3xl font-black sm:text-5xl">{hero.title}</h1>
+            <h1 className="mt-2 text-3xl font-semibold ">{hero.title}</h1>
             <div className="mt-2 text-white/80">{dateParts(hero.startTime).long} · {hero.venue}</div>
             <div className="mt-5 inline-flex items-center gap-3">
-              <span className="rounded bg-white px-5 py-2.5 font-bold text-[#024ddf]">Find Tickets</span>
-              <span className="rounded bg-emerald-400/20 px-3 py-1.5 text-sm font-semibold text-emerald-200">🛡️ Star sits? Blowout? Get money back.</span>
+              <span className="rounded bg-white px-5 py-2.5 font-semibold text-[#024ddf]">Find Tickets</span>
+              <span className="text-neutral-300">Bluff Protect available</span>
             </div>
           </div>
         </Link>
@@ -42,7 +41,7 @@ export default async function Seatwise() {
       <main className="mx-auto max-w-6xl px-4 py-8">
         {groups.filter(([, xs]) => xs.length).map(([name, xs]) => (
           <section key={name} className="mb-10">
-            <h2 className="mb-1 text-xl font-black">{name}</h2>
+            <h2 className="mb-1 text-xl font-semibold">{name}</h2>
             {xs.map((ev) => <EventRow key={ev.id} ev={ev} />)}
           </section>
         ))}

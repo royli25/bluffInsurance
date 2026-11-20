@@ -12,7 +12,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
   if (!ev) notFound();
   const tier = ev.tiers.find((t) => t.id === sp.tier) ?? ev.tiers[0];
   return (
-    <div className="min-h-screen bg-zinc-100">
+    <div className="min-h-screen bg-neutral-100">
       <SeatwiseHeader />
       <Checkout ev={ev} tier={tier} qty={Number(sp.qty ?? 2)} />
     </div>

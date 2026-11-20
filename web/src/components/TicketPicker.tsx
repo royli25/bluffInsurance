@@ -17,28 +17,28 @@ export default function TicketPicker({ ev }: { ev: TicketEvent }) {
     <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 lg:grid-cols-[380px_1fr]">
       <div className="rounded-lg bg-white shadow-sm">
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <div className="font-bold">Tickets</div>
+          <div className="font-semibold">Tickets</div>
           <select value={qty} onChange={(e) => setQty(Number(e.target.value))} className="rounded border px-2 py-1 text-sm">
             {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} Ticket{n > 1 ? "s" : ""}</option>)}
           </select>
         </div>
         {ev.tiers.map((x, i) => (
           <button key={x.id} onClick={() => setTier(x.id)}
-            className={`flex w-full items-center gap-3 border-b px-4 py-3 text-left ${tier === x.id ? "bg-blue-50 ring-2 ring-inset ring-[#024ddf]" : "hover:bg-zinc-50"}`}>
+            className={`flex w-full items-center gap-3 border-b px-4 py-3 text-left ${tier === x.id ? "bg-blue-50 ring-2 ring-inset ring-[#024ddf]" : "hover:bg-neutral-50"}`}>
             <span className="h-3 w-3 rounded-full" style={{ background: TIER_COLORS[i] }} />
             <div className="flex-1">
               <div className="font-semibold">{x.name}</div>
-              <div className="text-xs text-zinc-500">{x.section} · Standard Admission</div>
+              <div className="text-sm text-neutral-500">{x.section} · Standard Admission</div>
             </div>
             <div className="text-right">
-              <div className="font-bold">{usd0(x.price)}</div>
-              <div className="text-[11px] text-zinc-500">incl. fees</div>
+              <div className="font-semibold">{usd0(x.price)}</div>
+              <div className="text-sm text-neutral-500">incl. fees</div>
             </div>
           </button>
         ))}
         <div className="p-4">
           <button onClick={() => router.push(`/seatwise/checkout/${ev.id}?tier=${tier}&qty=${qty}`)}
-            className="w-full rounded bg-[#024ddf] py-3 font-bold text-white hover:bg-[#0141b9]">
+            className="w-full rounded bg-[#024ddf] py-3 font-semibold text-white hover:bg-[#0141b9]">
             Next · {usd0(t.price * qty)}
           </button>
         </div>
