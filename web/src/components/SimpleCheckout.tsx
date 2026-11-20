@@ -318,11 +318,14 @@ export default function SimpleCheckout({
                             </span>
                           </strong>
                           <span>If {option.trigger}.</span>
-                          <span className={styles.protectionProvider}>Powered by <ProviderLogo provider="gemini" /></span>
                         </span>
                         <span className={styles.protectionPrice}>
                           {amount ? `+${usd(amount.premium)}` : <span className={styles.priceSkeleton} aria-label="Fetching price" />}
                           <small>for the order</small>
+                          <span className={styles.protectionProvider}>
+                            <span>Powered by</span>
+                            <span className={styles.geminiChip}><ProviderLogo provider="gemini" dark /></span>
+                          </span>
                         </span>
                       </label>
                     );
