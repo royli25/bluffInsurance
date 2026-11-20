@@ -48,7 +48,7 @@ contracts/BluffProtectionVault.sol   purchasePolicy · depositHedgeProceeds · s
 
 - **Market data is live**: `api.gemini.com/v1/prediction-markets/events` is public. There's a 3.5 MB snapshot in `web/data/` so the demo still works offline.
 - **Hedge orders** go out live when `GEMINI_API_KEY` and `GEMINI_API_SECRET` are set. Without them, we build the same order payload and record a simulated fill.
-- **Arc** goes live when `ARC_OPERATOR_KEY` is set and the vault is deployed (`contracts/`, `npm run deploy:arc`). Without them, the policy and market hashes are still computed exactly and the tx is mocked.
+- **Arc is live on testnet.** `BluffProtectionVault` is deployed at [`0xfab42bf0ea82413d078af58712ef31a43b7ccec8`](https://testnet.arcscan.app/address/0xfab42bf0ea82413d078af58712ef31a43b7ccec8) (chain 5042002). Every checkout calls `purchasePolicy`, and every settlement calls `depositHedgeProceeds` and `settleMarket` with real transactions. On-chain amounts are recorded at 1/100 of the USD figures (`ARC_AMOUNT_SCALE`) to fit testnet faucet limits. Without `ARC_OPERATOR_KEY`, the app falls back to simulated txs with the same policy and market hashes. To redeploy: `cd contracts && NODE_USE_ENV_PROXY=1 node scripts/deploy-viem.mjs` (or `npm run deploy:arc`).
 
 The full product spec is in [`docs/PRD.md`](docs/PRD.md).
 

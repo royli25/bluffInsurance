@@ -1,8 +1,13 @@
 {
-  "address": null,
+  "address": "0xfab42bf0ea82413d078af58712ef31a43b7ccec8",
   "chainId": 5042002,
   "network": "arcTestnet",
   "usdc": "0x3600000000000000000000000000000000000000",
+  "operator": "0x0Fa879fe0d0083D31E85F48AB3051E1dE4e3b9be",
+  "oracle": "0x0Fa879fe0d0083D31E85F48AB3051E1dE4e3b9be",
+  "deployTx": "0x42784fd91c712efaf47f166291a192d437514f73e3a895a8ba5e50ecfa0c4082",
+  "deployedAt": "2026-11-20T03:34:18.637Z",
+  "explorer": "https://testnet.arcscan.app/address/0xfab42bf0ea82413d078af58712ef31a43b7ccec8",
   "abi": [
     {
       "inputs": [

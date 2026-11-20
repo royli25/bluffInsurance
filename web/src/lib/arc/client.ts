@@ -33,7 +33,9 @@ export const arcMode = (): "live" | "simulated" =>
   process.env.ARC_OPERATOR_KEY && vaultAddress ? "live" : "simulated";
 
 export const toBytes32 = (s: string): Hex => keccak256(toHex(s));
-const usdc = (n: number) => parseUnits(n.toFixed(6), 6);
+/** Testnet budget: record on-chain amounts at ARC_AMOUNT_SCALE (default 1/100) of the USD figures. */
+export const ARC_SCALE = Number(process.env.ARC_AMOUNT_SCALE ?? "0.01");
+const usdc = (n: number) => parseUnits((n * ARC_SCALE).toFixed(6), 6);
 
 export interface ArcReceipt {
   mode: "live" | "simulated";
@@ -90,16 +92,18 @@ export async function recordPolicyOnArc(p: {
   return { mode: "live", txHash: tx, explorerUrl: explorer(tx), policyIdHex, marketRefHex };
 }
 
-export async function settleOnArc(marketRef: string, triggered: boolean, policyIds: string[], hedgeProceeds: number): Promise<ArcReceipt> {
+export async function settleOnArc(marketRef: string, triggered: boolean, policyIds: string[], hedgeProceeds: number, totalPayout = 0): Promise<ArcReceipt> {
   if (arcMode() === "simulated") {
     const tx = fakeTx();
     return { mode: "simulated", txHash: tx, explorerUrl: explorer(tx), marketRefHex: toBytes32(marketRef) };
   }
   const { pub, wallet } = clients();
-  if (triggered && hedgeProceeds > 0) {
-    const a = await wallet.writeContract({ address: deployment.usdc as Hex, abi: erc20Abi, functionName: "approve", args: [vaultAddress!, usdc(hedgeProceeds)] });
+  // Hedge proceeds land in the vault; for proxy (partial) hedges the Bluff reserve tops up the residual.
+  const deposit = Math.max(hedgeProceeds, totalPayout);
+  if (triggered && deposit > 0) {
+    const a = await wallet.writeContract({ address: deployment.usdc as Hex, abi: erc20Abi, functionName: "approve", args: [vaultAddress!, usdc(deposit)] });
     await pub.waitForTransactionReceipt({ hash: a });
-    const d = await wallet.writeContract({ address: vaultAddress!, abi: deployment.abi, functionName: "depositHedgeProceeds", args: [usdc(hedgeProceeds), toBytes32(marketRef)] });
+    const d = await wallet.writeContract({ address: vaultAddress!, abi: deployment.abi, functionName: "depositHedgeProceeds", args: [usdc(deposit), toBytes32(marketRef)] });
     await pub.waitForTransactionReceipt({ hash: d });
   }
   const tx = await wallet.writeContract({

@@ -115,7 +115,8 @@ export async function settle(eventId: string, coverageId: CoverageId, triggered:
   const hedgeProceeds = triggered
     ? targets.reduce((s, p) => s + Number(p.hedge.filledQuantity) * (p.hedgeType === "full" ? 1 : 0.12), 0)
     : 0;
-  const arc = await settleOnArc(marketRef, triggered, targets.map((p) => p.id), hedgeProceeds);
+  const totalPayout = targets.reduce((s, p) => s + p.payout, 0);
+  const arc = await settleOnArc(marketRef, triggered, targets.map((p) => p.id), hedgeProceeds, totalPayout);
   const ids = new Set(targets.map((p) => p.id));
   db.updatePolicies((p) =>
     ids.has(p.id)

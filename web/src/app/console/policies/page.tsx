@@ -31,10 +31,10 @@ export default function Policies() {
             </div>
             <div className="space-y-1 rounded-md bg-neutral-800 p-3">
               <div className="font-semibold">Arc vault, {p.arc.mode}</div>
-              <div className="font-mono text-neutral-300">purchasePolicy {short(p.arc.txHash, 8)}</div>
+              <a href={p.arc.mode === "live" ? p.arc.explorerUrl : undefined} target="_blank" className="block font-mono text-neutral-300 hover:text-white">purchasePolicy {short(p.arc.txHash, 8)}</a>
               <div className="font-mono text-neutral-400">policy {short(p.arc.policyIdHex ?? "", 8)}</div>
               {p.settlement && (
-                <div className="font-mono text-neutral-300">settleMarket({String(p.settlement.triggered)}) {short(p.settlement.arc.txHash, 8)}</div>
+                <a href={p.settlement.arc.mode === "live" ? p.settlement.arc.explorerUrl : undefined} target="_blank" className="block font-mono text-neutral-300 hover:text-white">settleMarket({String(p.settlement.triggered)}) {short(p.settlement.arc.txHash, 8)}</a>
               )}
               {p.settlement?.triggered && <div className="text-emerald-400">Paid {usd(p.payout)} to holder</div>}
             </div>
