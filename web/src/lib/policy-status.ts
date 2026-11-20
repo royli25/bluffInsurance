@@ -7,7 +7,7 @@ export function policyStatusText(policy: Policy) {
       : "Payout awaiting Arc confirmation";
   if (policy.status === "paid")
     return policy.arc.mode === "simulated"
-      ? "Demo refund completed"
+      ? "Refund recorded"
       : "USDC payout confirmed on Arc";
   if (policy.status === "expired")
     return "Coverage complete · Outcome did not happen";

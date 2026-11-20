@@ -30,7 +30,7 @@ export default function DemoSteps({
   ];
   return (
     <ol
-      aria-label="Demo flow"
+      aria-label="Business workflow"
       className="flex flex-wrap items-center gap-5 rounded-lg bg-neutral-900 px-5 py-4"
     >
       {steps.map((s, i) => (

@@ -6,7 +6,7 @@ import { getCatalog, getEvent, offeredCoverages } from "@/lib/service";
 import { db } from "@/lib/store";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Demo checkout · Bluff",
+  title: "Checkout · Bluff",
   description:
     "Buy protection and follow the contract through the business dashboard.",
 };
@@ -38,7 +38,7 @@ export default async function CheckoutDemo({
           Protection is not published yet.
         </h1>
         <p className="text-sm text-neutral-500">
-          Choose the protection options for {ev.title} before trying the demo
+          Choose the protection options for {ev.title} before opening
           checkout.
         </p>
         <Link
