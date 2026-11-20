@@ -1,6 +1,6 @@
 # Coverage market routing
 
-Checkout rescans the configured providers whenever its 30-second quote expires. The business dashboard and event configuration refresh their market comparison every 30 seconds while open. Business navigation groups each event, its protection options, and each available provider. Coverage and provider switches persist in the existing offer configuration; quote routing excludes disabled providers. Dashboard switches save immediately; the detailed builder keeps its existing Save/Publish flow.
+Checkout rescans the configured providers whenever its 30-second quote expires. The business dashboard and event configuration refresh their market comparison every 30 seconds while open. Business navigation groups each event, its protection options, and each available provider. Coverage and provider switches persist in the existing offer configuration; quote routing excludes disabled providers. Configured dashboard events stay expanded, each with a colored countdown until its next scan. Dashboard switches save immediately; individual protections and all coverage for an event can be disabled. Disabling an offering prevents new purchases and invalidates outstanding quotes while preserving issued contracts and settlement. The ticket browser lists every published event with at least one enabled, supported coverage option. The detailed builder keeps its existing Save/Publish flow.
 
 ## Supported comparisons
 

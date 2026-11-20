@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { EventMarks } from "@/components/TeamMarks";
 import Icon from "@/components/TicketmasterIcon";
 import ProviderLogo from "@/components/ProviderLogo";
+import CustomerHeader from "@/components/CustomerHeader";
 import { usd, usd0, dateParts } from "@/lib/format";
 import type { Coverage } from "@/lib/coverage";
 import type { TicketEvent } from "@/lib/catalog";
@@ -19,9 +20,7 @@ export default function SimpleCheckout({
 }) {
   const [tierIndex, setTierIndex] = useState(0);
   const [quantity, setQuantity] = useState(2);
-  const [protectionId, setProtectionId] = useState<string>(
-    options[0]?.id ?? "none",
-  );
+  const [protectionId, setProtectionId] = useState<string>("none");
   const [confirmed, setConfirmed] = useState(false);
   const [policy, setPolicy] = useState<Policy | null>(null);
   const [busy, setBusy] = useState(false);
@@ -127,19 +126,13 @@ export default function SimpleCheckout({
   }
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/console" className={styles.brand}>
-          bluff<span>checkout</span>
-        </Link>
-        <Link href={`/console/events/${event.id}`} className={styles.backLink}>
-          Back to event <Icon name="arrow-right" className={styles.icon} />
-        </Link>
-      </header>
+      <CustomerHeader checkout />
       <main className={styles.main}>
         <div className={styles.pageHeading}>
           <div>
             <h1>{confirmed ? "Order complete" : "Checkout"}</h1>
           </div>
+          <Link href="/tickets" className={styles.changeEvent}><Icon name="chevron-left" className={styles.icon} />Change event</Link>
         </div>
         <section className={styles.eventHeading} aria-label="Selected event">
           {event.kind === "sports" ? (
@@ -199,17 +192,8 @@ export default function SimpleCheckout({
                 : "Tickets selected without protection."}{" "}
             </p>
             <div className={styles.confirmationActions}>
-              {policy && (
-                <Link
-                  href={`/console/contracts/${policy.id}`}
-                  className={styles.primary}
-                >
-                  View contract & resolve outcome{" "}
-                  <Icon name="arrow-right" className={styles.icon} />
-                </Link>
-              )}
-              <Link href="/console" className={styles.secondary}>
-                Back to dashboard
+              <Link href="/tickets" className={styles.primary}>
+                Browse more events <Icon name="arrow-right" className={styles.icon} />
               </Link>
               <button
                 type="button"

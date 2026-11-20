@@ -241,6 +241,12 @@ async function main() {
       !detail.includes(`href="${created.arc.explorerUrl}"`),
       "mock transaction must not link to a real explorer",
     );
+    const pendingQuote = await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty });
+    const paused = await post("/api/offers", { eventId, published: false, coverages: { "team-loses": { enabled: false, refundPct: 15 } } });
+    assert.equal(paused.status, 200);
+    assert.equal((await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty })).status, 400, "disabled coverage stops new quotes");
+    assert.equal((await post("/api/policies", { ...order, requestId: randomUUID(), quoteId: pendingQuote.body.quote.id })).status, 400, "disabling coverage invalidates an outstanding purchase quote");
+    assert.equal((await policies()).find((p) => p.id === created.id)?.status, "active", "disabling an offer preserves existing contracts");
     const settlement = await post("/api/settle", {
       eventId,
       coverageId: "team-loses",
@@ -278,6 +284,7 @@ async function main() {
       ).body.settled,
       0,
     );
+    assert.equal((await post("/api/offers", { eventId, published: true, coverages: { "team-loses": { enabled: true, refundPct: 15 } } })).status, 200);
     const nextQuote = (await post("/api/quotes", { eventId, tierId: order.tierId, qty: order.qty })).body.quote;
     // Quotes are persisted separately from orders and survive process restarts.
     await stop();
