@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import CustomerHeader from "@/components/CustomerHeader";
 import { EventMarks } from "@/components/TeamMarks";
 import Icon from "@/components/TicketmasterIcon";
@@ -20,10 +21,19 @@ export default async function CustomerEvents() {
       <main className={`${styles.main} ${styles.selectionMain}`} id="main-content">
         <div className={styles.pageHeading}><h1>Choose your next live moment</h1></div>
         <div className={styles.eventCards}>
-          {events.map((event) => (
+          {events.map((event, index) => (
             <Link key={event.id} href={`/tickets/checkout?event=${encodeURIComponent(event.id)}`} className={styles.eventCard}>
               <div className={`${styles.eventArtwork} ${event.kind === "concert" ? styles.festivalArtwork : styles.nbaArtwork}`}>
-                {event.kind === "concert" ? <Icon name="ticket-01" className={styles.festivalIcon} /> : <EventMarks ev={event} large />}
+                <Image
+                  src={event.kind === "concert" ? "/events/concert.webp" : event.home?.abbr === "NYK" ? "/events/madison-square-garden.webp" : "/events/basketball.webp"}
+                  alt=""
+                  fill
+                  sizes="(max-width: 680px) 100vw, 50vw"
+                  priority={index < 2}
+                  unoptimized
+                  className={styles.eventPhoto}
+                />
+                {event.kind === "sports" && <div className={styles.artworkMarks}><EventMarks ev={event} /></div>}
               </div>
               <div className={styles.eventCardBody}>
                 <h2>{event.title}</h2>
