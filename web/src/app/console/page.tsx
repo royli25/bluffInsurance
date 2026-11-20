@@ -1,151 +1,118 @@
 import Link from "next/link";
-import Stat from "@/components/Stat";
-import StatusPill from "@/components/StatusPill";
-import { getCatalog } from "@/lib/service";
 import { db } from "@/lib/store";
-import { usd, short } from "@/lib/format";
-import { PolicyMarks } from "@/components/TeamMarks";
-import StreamMonitor from "@/components/StreamMonitor";
+import { businessSummary } from "@/lib/business";
+import { usd } from "@/lib/format";
 import AutoRefresh from "@/components/AutoRefresh";
-import { streamHealth } from "@/lib/quicknode/health";
-
+import ContractLedger from "@/components/ContractLedger";
 export const dynamic = "force-dynamic";
-
-export default async function Overview() {
-  const { universe, catalog } = await getCatalog();
-  const ps = db.policies();
-  const streams = streamHealth();
-  const contracts = universe.events.reduce((s, e) => s + e.contracts.length, 0);
-  const premium = ps.reduce((s, p) => s + p.premium, 0);
-  const active = ps.filter((p) =>
-    ["pending", "active", "settling"].includes(p.status),
-  );
-  const liability = active.reduce((s, p) => s + p.payout, 0);
-  const hedged = active.reduce(
-    (s, p) =>
-      s +
-      (p.hedgeType === "full"
-        ? Number(p.hedge.filledQuantity)
-        : p.payout * 0.35),
-    0,
-  );
-  // full hedges: order cost is spent; partial (proxy) hedges: capital is recycled, expected loss is the cost
-  const hedgeCost = ps
-    .filter((p) => p.hedgeType === "full")
-    .reduce((s, p) => s + p.hedge.cost, 0);
-  const expectedProxyLoss = ps
-    .filter((p) => p.hedgeType === "partial")
-    .reduce((s, p) => s + p.payout * 0.08, 0);
-  const margin = premium - hedgeCost - expectedProxyLoss;
-  const paid = ps
-    .filter((p) => p.status === "paid")
-    .reduce((s, p) => s + p.payout, 0);
+export default function Dashboard() {
+  const policies = db.policies();
+  const summary = businessSummary(policies);
   return (
-    <div className="space-y-6">
-      <AutoRefresh enabled={streams.enabled} />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold">Overview</h1>
+    <div className="mx-auto max-w-7xl space-y-8">
+      <AutoRefresh enabled />
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="mb-2 text-xs text-neutral-500">
+            YOUR BUSINESS, AT A GLANCE
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-2 text-sm text-neutral-500">
+            Protection sold. Events covered. Everything in one place.
+          </p>
+        </div>
         <Link
-          href="/console/events"
-          className="rounded-md bg-neutral-100 px-4 py-2 font-semibold text-neutral-950 hover:bg-white"
+          href="/console/events?add=1"
+          className="rounded-md bg-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-950 hover:bg-white"
         >
-          Drop an event
+          Add event
         </Link>
-      </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat
-          label="Gemini markets"
-          value={universe.events.length.toLocaleString()}
-        />
-        <Stat label="Contracts indexed" value={contracts.toLocaleString()} />
-        <Stat label="Protectable events" value={String(catalog.length)} />
-        <Stat label="Policies sold" value={String(ps.length)} />
-        <Stat label="Premium written" value={usd(premium)} />
-        <Stat label="Open liability" value={usd(liability)} />
-        <Stat
-          label="Hedge coverage"
-          value={
-            liability
-              ? `${Math.min(100, Math.round((hedged / liability) * 100))}%`
-              : "—"
-          }
-        />
-        <Stat
-          label="Gross margin"
-          value={usd(margin)}
-          tone={margin >= 0 ? "good" : "warn"}
-        />
-      </div>
-
-      <StreamMonitor initial={streams} compact />
-      <div className="rounded-lg bg-neutral-900 p-4">
-        <div className="mb-3 font-semibold">Pipeline</div>
-        <div className="grid gap-2 sm:grid-cols-5">
-          {[
-            ["Event dropped", "Organizer or platform"],
-            [
-              "Gemini scan",
-              `${universe.events.length} markets, ${universe.source}`,
-            ],
-            ["Coverage match", "Moneyline, spread, total, weather"],
-            ["Hedge order", "Buy yes or no at the ask"],
-            ["Arc vault", "USDC escrow, automatic refund"],
-          ].map(([a, b]) => (
-            <div key={a} className="rounded-md bg-neutral-800 p-3">
-              <div className="font-semibold">{a}</div>
-              <div className="text-neutral-400">{b}</div>
+      </header>
+      <section
+        className="grid gap-4 sm:grid-cols-3"
+        aria-label="Business totals"
+      >
+        {[
+          [
+            "Active contracts",
+            summary.active.toLocaleString(),
+            "Customer protection currently in force",
+            "active",
+          ],
+          [
+            "Protected events",
+            summary.protectedEvents.toLocaleString(),
+            "Events with active customer contracts",
+            "events",
+          ],
+          [
+            "Premiums collected",
+            usd(summary.premiums),
+            "All-time premiums · before hedge costs",
+            "premiums",
+          ],
+        ].map(([label, value, hint, key]) => (
+          <div
+            key={key}
+            className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6"
+          >
+            <h2 className="text-sm text-neutral-400">{label}</h2>
+            <div
+              data-metric={key}
+              className="mt-4 text-4xl font-semibold tracking-tight tabular-nums"
+            >
+              {value}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-lg bg-neutral-900">
-        <div className="flex justify-between px-4 py-3">
-          <span className="font-semibold">Recent policies</span>
-          <span className="text-neutral-400">Refunds paid {usd(paid)}</span>
-        </div>
-        {ps.length === 0 && (
-          <div className="px-4 pb-4 text-neutral-500">
-            No policies yet. Buy one on the storefront.
+            <p className="mt-3 text-xs leading-5 text-neutral-600">{hint}</p>
           </div>
-        )}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <tbody>
-              {ps.slice(0, 8).map((p) => (
-                <tr key={p.id} className="border-t border-neutral-800">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <PolicyMarks eventId={p.eventId} />
-                      <div>
-                        {p.emoji} {p.coverageName}
-                        <div className="text-neutral-400">{p.eventTitle}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {usd(p.premium)}
-                    <div className="text-neutral-400">pays {usd(p.payout)}</div>
-                  </td>
-                  <td className="px-4 py-3 font-mono">
-                    {p.hedge.order.side} {p.hedge.order.quantity}{" "}
-                    {p.hedge.order.outcome} @ {p.hedge.order.price}
-                    <div className="text-neutral-400">
-                      {p.hedge.order.symbol}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-neutral-400">
-                    {p.arc.txHash ? short(p.arc.txHash) : "Awaiting Arc"}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <StatusPill s={p.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        ))}
+      </section>
+      {!policies.length && (
+        <section className="flex flex-wrap items-center justify-between gap-5 rounded-xl border border-neutral-800 px-6 py-5">
+          <div>
+            <h2 className="font-semibold">
+              Your first contract starts with an event.
+            </h2>
+            <p className="mt-1 text-sm text-neutral-500">
+              Publish protection, try the checkout, then follow it through to a
+              payout.
+            </p>
+          </div>
+          <Link
+            href="/console/events"
+            className="whitespace-nowrap text-sm text-neutral-200 hover:underline"
+          >
+            Set up protection →
+          </Link>
+        </section>
+      )}
+      <section className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/40">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-5">
+          <div>
+            <h2 className="font-semibold">Recent contracts</h2>
+            <p className="mt-1 text-xs text-neutral-500">
+              Every purchase, from confirmation to payout.
+            </p>
+          </div>
+          <Link
+            href="/console/contracts"
+            className="text-xs text-neutral-400 hover:text-white"
+          >
+            View all contracts →
+          </Link>
         </div>
-      </div>
+        <ContractLedger policies={policies.slice(0, 8)} />
+      </section>
+      {summary.pending > 0 && (
+        <p className="text-xs text-amber-300">
+          {summary.pending}{" "}
+          {summary.pending === 1 ? "contract is" : "contracts are"} awaiting
+          confirmation.{" "}
+          <Link className="underline" href="/console/contracts">
+            Review contracts
+          </Link>
+        </p>
+      )}
     </div>
   );
 }
