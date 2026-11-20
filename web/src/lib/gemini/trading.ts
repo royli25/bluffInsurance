@@ -34,7 +34,9 @@ export interface HedgeFill {
 }
 
 export const hedgeMode = (): "live" | "simulated" =>
-  process.env.GEMINI_API_KEY && process.env.GEMINI_API_SECRET ? "live" : "simulated";
+  process.env.GEMINI_API_KEY && process.env.GEMINI_API_SECRET
+    ? "live"
+    : "simulated";
 
 async function privatePost(endpoint: string, body: Record<string, unknown>) {
   const key = process.env.GEMINI_API_KEY!;
@@ -55,13 +57,22 @@ async function privatePost(endpoint: string, body: Record<string, unknown>) {
     signal: AbortSignal.timeout(15_000),
   });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`Gemini ${endpoint} ${res.status}: ${JSON.stringify(json)}`);
+  if (!res.ok)
+    throw new Error(
+      `Gemini ${endpoint} ${res.status}: ${JSON.stringify(json)}`,
+    );
   return json;
 }
 
-export async function placeHedge(order: HedgeOrder): Promise<HedgeFill> {
-  if (hedgeMode() === "live") {
-    const status = await privatePost("/v1/prediction-markets/terms/status", {}).catch(() => null);
+export async function placeHedge(
+  order: HedgeOrder,
+  simulate = false,
+): Promise<HedgeFill> {
+  if (!simulate && hedgeMode() === "live") {
+    const status = await privatePost(
+      "/v1/prediction-markets/terms/status",
+      {},
+    ).catch(() => null);
     if (status && status.hasAcceptedLatest === false) {
       await privatePost("/v1/prediction-markets/terms/accept", {});
     }

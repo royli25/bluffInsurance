@@ -31,7 +31,7 @@ export default async function Contract({
         <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="mb-2 font-mono text-xs text-neutral-600">{p.id}</p>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-xl font-semibold tracking-tight">
               {p.coverageName}
             </h1>
             <p className="mt-2 text-neutral-400">{p.eventTitle}</p>
@@ -53,15 +53,15 @@ export default async function Contract({
         ].map(([label, value]) => (
           <div
             key={label}
-            className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-5"
+            className="rounded-lg border border-neutral-800 bg-neutral-900/50 p-5"
           >
             <p className="text-xs text-neutral-500">{label}</p>
             <p className="mt-3 text-xl font-semibold">{value}</p>
           </div>
         ))}
       </section>
-      <section className="rounded-xl border border-neutral-800 p-6">
-        <h2 className="font-semibold">What this contract covers</h2>
+      <section className="rounded-lg border border-neutral-800 p-6">
+        <h2 className="font-semibold">Protection</h2>
         <p className="mt-3 text-neutral-300">
           If {p.trigger}, the customer gets {usd(p.payout)} back.
         </p>
@@ -70,7 +70,7 @@ export default async function Contract({
           ticket order.
         </p>
       </section>
-      <section className="rounded-xl border border-neutral-800 p-6">
+      <section className="rounded-lg border border-neutral-800 p-6">
         <h2 className="font-semibold">Contract activity</h2>
         <ol className="mt-5 space-y-5">
           {[
@@ -109,7 +109,7 @@ export default async function Contract({
                   ? "The protected outcome did not happen"
                   : "The contract follows the selected event outcome",
             ],
-          ].map(([title, time, description], i) => (
+          ].map(([title, time], i) => (
             <li key={title} className="flex gap-4">
               <span
                 className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${time ? "border-emerald-800 bg-emerald-400/10 text-emerald-300" : "border-neutral-700 text-neutral-500"}`}
@@ -118,7 +118,7 @@ export default async function Contract({
               </span>
               <div>
                 <h3 className="text-sm">{title}</h3>
-                <p className="mt-1 text-xs text-neutral-500">{description}</p>
+
                 {time && (
                   <time
                     dateTime={time}
@@ -147,7 +147,7 @@ export default async function Contract({
           </Link>
         )}
       </section>
-      <details className="rounded-xl border border-neutral-800 p-6">
+      <details className="rounded-lg border border-neutral-800 p-6">
         <summary className="cursor-pointer font-semibold">
           Hedge & transaction evidence
         </summary>

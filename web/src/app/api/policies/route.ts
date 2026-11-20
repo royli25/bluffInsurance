@@ -17,6 +17,9 @@ export async function POST(req: Request) {
       qty: Number(body.qty ?? 1),
       holderName: body.holderName ?? "Guest",
       holderEmail: body.holderEmail ?? "guest@example.com",
+      demo: body.demo === true,
+      requestId:
+        typeof body.requestId === "string" ? body.requestId : undefined,
     });
     return NextResponse.json(
       { policy },

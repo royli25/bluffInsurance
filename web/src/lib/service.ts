@@ -55,7 +55,7 @@ export async function offeredCoverages(
   const cfg = db.offer(ev.id) ?? defaultOffer(ev.id, all);
   if (!cfg.published) return [];
   return all
-    .filter((c) => cfg.coverages[c.id]?.enabled !== false)
+    .filter((c) => cfg.coverages[c.id]?.enabled === true)
     .map((c) => ({
       ...c,
       defaultRefundPct: cfg.coverages[c.id]?.refundPct ?? c.defaultRefundPct,
@@ -70,30 +70,73 @@ export async function purchase(input: {
   qty: number;
   holderName: string;
   holderEmail: string;
+  demo?: boolean;
+  requestId?: string;
 }): Promise<Policy> {
-  assertStreamConfiguration(arcMode());
+  const mode = input.demo ? "simulated" : arcMode();
+  assertStreamConfiguration(mode);
+  if (
+    typeof input.holderName !== "string" ||
+    !input.holderName.trim() ||
+    input.holderName.length > 100 ||
+    typeof input.holderEmail !== "string" ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.holderEmail) ||
+    input.holderEmail.length > 200
+  )
+    throw new Error("Enter a customer name and valid email address.");
+  if (input.rooting !== "home" && input.rooting !== "away")
+    throw new Error("Choose a valid team.");
+  if (!Number.isInteger(input.qty) || input.qty < 1 || input.qty > 6)
+    throw new Error("Choose between 1 and 6 tickets.");
+  if (input.demo && !db.offer(input.eventId)?.published)
+    throw new Error(
+      "Publish protection for this event before opening checkout.",
+    );
+  if (input.requestId && !/^[a-zA-Z0-9-]{20,80}$/.test(input.requestId))
+    throw new Error("Invalid checkout request ID.");
   const { ev } = await getEvent(input.eventId);
   if (!ev) throw new Error("Unknown event");
   const tier = ev.tiers.find((t) => t.id === input.tierId) ?? ev.tiers[0];
+  const id =
+    input.demo && input.requestId
+      ? `pol_demo_${crypto.createHash("sha256").update(input.requestId).digest("hex").slice(0, 20)}`
+      : `pol_${crypto.randomBytes(5).toString("hex")}`;
+  const previous = db.policy(id);
+  function reuse(previous: Policy) {
+    if (
+      previous.eventId !== input.eventId ||
+      previous.coverageId !== input.coverageId ||
+      previous.qty !== input.qty ||
+      previous.tierName !== tier.name ||
+      previous.holderName !== input.holderName ||
+      previous.holderEmail !== input.holderEmail
+    )
+      throw new Error(
+        "This checkout request already belongs to another order.",
+      );
+    return previous;
+  }
+  if (previous) return reuse(previous);
   const covs = await offeredCoverages(ev, input.rooting);
   const cov = covs.find((c) => c.id === input.coverageId);
   if (!cov) throw new Error("Coverage not offered");
   const ticketTotal = tier.price * input.qty;
   const q = quote(cov, ticketTotal, cov.defaultRefundPct);
-  const id = `pol_${crypto.randomBytes(5).toString("hex")}`;
 
   // 1) Hedge on Gemini (buy the contract that pays when the refund is owed)
-  const hedge = await placeHedge({
-    symbol: cov.hedge.instrumentSymbol,
-    orderType: "limit",
-    side: "buy",
-    outcome: cov.hedge.outcome,
-    quantity: q.contracts.toFixed(2),
-    price: Math.min(0.99, cov.hedge.price).toFixed(2),
-  });
+  const hedge = await placeHedge(
+    {
+      symbol: cov.hedge.instrumentSymbol,
+      orderType: "limit",
+      side: "buy",
+      outcome: cov.hedge.outcome,
+      quantity: q.contracts.toFixed(2),
+      price: Math.min(0.99, cov.hedge.price).toFixed(2),
+    },
+    input.demo,
+  );
 
   const marketRef = `${cov.hedge.eventTicker}:${cov.id}`;
-  const mode = arcMode();
   const policy: Policy = {
     id,
     createdAt: new Date().toISOString(),
@@ -131,9 +174,18 @@ export async function purchase(input: {
   };
   // Persist customer/order context before sending the transaction. The event
   // journal can now recover a purchase even if this process dies after sending.
-  db.addPolicy(policy);
+  try {
+    db.addPolicy(policy);
+  } catch (error) {
+    // Concurrent retries can race across Node processes. The transactional
+    // store admits one demo order; every retry receives that same order.
+    const committed = input.demo ? db.policy(id) : undefined;
+    if (committed) return reuse(committed);
+    throw error;
+  }
   try {
     const arc = await recordPolicyOnArc({
+      simulate: input.demo,
       policyId: id,
       premium: q.premium,
       payout: q.payout,
@@ -171,6 +223,7 @@ export async function settle(
   eventId: string,
   coverageId: CoverageId,
   triggered: boolean,
+  demoOnly = false,
 ) {
   const targets = db
     .policies()
@@ -179,8 +232,12 @@ export async function settle(
         p.eventId === eventId &&
         p.coverageId === coverageId &&
         p.status === "active",
-    );
+      // filter below also keeps demo controls away from real policies
+    )
+    .filter((p) => !demoOnly || p.arc.mode === "simulated");
   if (!targets.length) return { settled: 0 };
+  if (new Set(targets.map((p) => p.arc.mode)).size > 1)
+    throw new Error("Resolve demo and live contracts separately.");
   if (!db.claimSettlement(targets.map((p) => p.id)))
     throw new Error(
       "Settlement is already being processed. Wait for chain confirmation.",
@@ -204,6 +261,7 @@ export async function settle(
       targets.map((p) => p.id),
       hedgeProceeds,
       totalPayout,
+      targets.every((p) => p.arc.mode === "simulated"),
     );
   } catch {
     db.updatePolicies((p) =>

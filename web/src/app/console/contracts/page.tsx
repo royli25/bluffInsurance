@@ -19,12 +19,9 @@ export default async function Contracts({
     <div className="mx-auto max-w-7xl space-y-7">
       <AutoRefresh enabled />
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Contracts</h1>
-        <p className="mt-2 text-sm text-neutral-500">
-          The complete ledger of customer protection.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight">Contracts</h1>
       </header>
-      <section className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/40">
+      <section className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/40">
         <form
           action="/console/contracts"
           className="flex flex-wrap items-center gap-3 border-b border-neutral-800 p-5"
@@ -63,10 +60,7 @@ export default async function Contracts({
             {policies.length} {policies.length === 1 ? "contract" : "contracts"}
           </span>
         </form>
-        <ContractLedger
-          policies={policies}
-          empty="No contracts match these filters. Try another search or choose an event to start a purchase."
-        />
+        <ContractLedger policies={policies} empty="No matching contracts" />
       </section>
     </div>
   );

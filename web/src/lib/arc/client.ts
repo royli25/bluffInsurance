@@ -77,10 +77,11 @@ export async function recordPolicyOnArc(p: {
   marketRef: string;
   trigger: string;
   expiry: Date;
+  simulate?: boolean;
 }): Promise<ArcReceipt> {
   const policyIdHex = toBytes32(p.policyId);
   const marketRefHex = toBytes32(p.marketRef);
-  if (arcMode() === "simulated") {
+  if (p.simulate || arcMode() === "simulated") {
     const tx = fakeTx();
     return {
       mode: "simulated",
@@ -139,8 +140,9 @@ export async function settleOnArc(
   policyIds: string[],
   hedgeProceeds: number,
   totalPayout = 0,
+  simulate = false,
 ): Promise<ArcReceipt> {
-  if (arcMode() === "simulated") {
+  if (simulate || arcMode() === "simulated") {
     const tx = fakeTx();
     return {
       mode: "simulated",

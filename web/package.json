@@ -16,7 +16,8 @@
     "streams:activate": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts activate",
     "streams:pause": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts pause",
     "streams:backfill": "node --conditions=react-server --import tsx scripts/quicknode/manage.ts backfill",
-    "test:streams:http": "node --conditions=react-server --import tsx test/quicknode-http.smoke.ts"
+    "test:streams:http": "node --conditions=react-server --import tsx test/quicknode-http.smoke.ts",
+    "test:demo:http": "node --conditions=react-server --import tsx test/demo-http.smoke.ts"
   },
   "dependencies": {
     "better-sqlite3": "^13.2.0",

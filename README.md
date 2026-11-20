@@ -6,7 +6,7 @@ Every Bluff policy is **fully hedged on Gemini prediction markets** and **settle
 
 > UBC 2026 Hackathon · Consumer Apps track · Best use of Arc · Gemini Prediction Markets bounty
 
-![Checkout with Bluff Protect](docs/screenshots/04-checkout-bluff-protect.png)
+Business demo: **Dashboard → Add event → Publish protection → Demo checkout → Contract → Resolve outcome.** See [`docs/DEMO.md`](docs/DEMO.md).
 
 ## How it works
 
@@ -64,7 +64,7 @@ npm run build && npm start                # optimized server; use for the demo
 cd ../contracts && npm install && npx hardhat test   # vault tests (14)
 ```
 
-Pages: `/` landing · `/seatwise` storefront · `/seatwise/account` fan policies · `/console` overview · `/console/events` drop an event · `/console/events/[id]` scan + coverage builder + settlement · `/console/scanner` all Gemini markets · `/console/policies` hedge orders and Arc txs · `/console/activity` QuickNode confirmations.
+Pages: `/` redirects to `/console` dashboard · `/console/events` event publishing · `/demo/checkout?event=EVENT_ID` connected simulated checkout · `/console/contracts` contract ledger · `/console/contracts/[id]` contract activity and evidence. Integration diagnostics remain under `/console/activity` and `/console/scanner`. The old storefront is no longer part of the business demo.
 
 ## Screenshots
 

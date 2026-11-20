@@ -31,7 +31,7 @@
 .ticketFieldset { border: 0; padding: 0; margin: 0; min-width: 0; width: 100%; }
 .sectionTitle { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; margin: 0 0 20px; padding: 0; width: 100%; }
 .step { display: inline-flex; align-items: center; justify-content: center; height: 24px; width: 24px; font-size: 11px; font-weight: 400; border: 1px solid #404040; border-radius: 50%; color: #a3a3a3; flex: none; }
-.tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
 .tier { display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: start; gap: 12px 8px; padding: 14px 10px; border: 1px solid #333; border-radius: 6px; cursor: pointer; transition: border-color 120ms, background 120ms; }
 .tier:hover { border-color: #737373; }
 .selectedTier { background: #262626; border-color: #a3a3a3; }
@@ -152,3 +152,11 @@
   .selectionNote .icon { margin-top: 2px; }
 }
 @media (prefers-reduced-motion: reduce) { .tier { transition: none; } }
+
+.customerFields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.customerFields label { display: grid; gap: 8px; color: #a3a3a3; font-size: 12px; }
+.customerFields input { min-width: 0; width: 100%; border: 1px solid #333; background: #0a0a0a; color: #eee; padding: 12px; border-radius: 6px; font: inherit; }
+.contractId { overflow-wrap: anywhere; font-family: var(--font-geist-mono), monospace; font-size: 10px; }
+.error { color: #fca5a5; font-size: 12px; line-height: 1.6; margin-bottom: 16px; }
+a.primary { text-decoration: none; }
+@media(max-width:680px) { .customerFields { grid-template-columns: minmax(0,1fr); } }
