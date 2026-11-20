@@ -41,7 +41,8 @@ Every Bluff policy is **fully hedged on Gemini prediction markets** and **settle
 │ publish → settle      │──► lib/coverage        matcher + pricing (event → markets → covers → quote)
 └───────────────────────┘──► lib/gemini/trading  hedge executor (HMAC-signed POST /v1/prediction-markets/order; simulated w/o keys)
                         ──► lib/arc/client       viem → BluffProtectionVault on Arc testnet (simulated w/o key)
-                        ──► lib/store            JSON store (policies, offers, custom events)
+                        ──► lib/store            SQLite WAL (orders, offers, canonical event journal)
+Arc vault events ──► QuickNode Streams ──► signed webhook ──► journal ──► confirmed policy/payout status
 
 contracts/BluffProtectionVault.sol   purchasePolicy · depositHedgeProceeds · settleMarket (oracle) · withdrawSurplus
 ```
@@ -52,15 +53,18 @@ contracts/BluffProtectionVault.sol   purchasePolicy · depositHedgeProceeds · s
 
 The full product spec is in [`docs/PRD.md`](docs/PRD.md).
 
+QuickNode Streams supplies independent purchase and payout confirmations when enabled. `/console/activity` shows connection health, canonical vault events and transaction links. The receiver verifies signatures, deduplicates retries, reconciles reorgs and survives server restarts. Without a configured Stream the integration remains disabled; simulated Arc transactions are never shown as QuickNode-confirmed. See [`docs/QUICKNODE-STREAMS.md`](docs/QUICKNODE-STREAMS.md) for account setup, persistent hosting and backfills.
+
 ## Run it
 
 ```bash
-cd web && npm install && npm run dev      # http://localhost:3000
-npm test                                   # coverage/pricing engine tests (6)
+cd web && npm install && npm run dev      # Node >=22 · http://localhost:3000
+npm test                                 # pricing, market data and Stream integration tests
+npm run build && npm start                # optimized server; use for the demo
 cd ../contracts && npm install && npx hardhat test   # vault tests (14)
 ```
 
-Pages: `/` landing · `/seatwise` storefront · `/seatwise/account` fan policies · `/console` overview · `/console/events` drop an event · `/console/events/[id]` scan + coverage builder + settlement · `/console/scanner` all Gemini markets · `/console/policies` hedge orders and Arc txs.
+Pages: `/` landing · `/seatwise` storefront · `/seatwise/account` fan policies · `/console` overview · `/console/events` drop an event · `/console/events/[id]` scan + coverage builder + settlement · `/console/scanner` all Gemini markets · `/console/policies` hedge orders and Arc txs · `/console/activity` QuickNode confirmations.
 
 ## Screenshots
 

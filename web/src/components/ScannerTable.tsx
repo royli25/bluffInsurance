@@ -1,7 +1,8 @@
 "use client";
 import { useMemo, useState } from "react";
+import TeamMarks from "@/components/TeamMarks";
 
-type Row = { ticker: string; title: string; category: string; league: string; contracts: number; quoted: number; volume: number; start: string; live: boolean };
+type Row = { ticker: string; title: string; category: string; league: string; contracts: number; quoted: number; volume: number; start: string; live: boolean; participants: { abbreviation: string; side: string }[] };
 
 export default function ScannerTable({ rows }: { rows: Row[] }) {
   const [q, setQ] = useState("");
@@ -28,7 +29,7 @@ export default function ScannerTable({ rows }: { rows: Row[] }) {
           <tbody>
             {list.map((r) => (
               <tr key={r.ticker} className="border-t border-neutral-800">
-                <td className="px-3 py-2">{r.title}{r.live && <span className="ml-2 text-red-400">Live</span>}<div className="font-mono text-neutral-500">{r.ticker}</div></td>
+                <td className="px-3 py-2"><div className="flex items-center gap-3"><TeamMarks league={r.league} participants={r.participants} /><div>{r.title}{r.live && <span className="ml-2 text-red-400">Live</span>}<div className="font-mono text-neutral-500">{r.ticker}</div></div></div></td>
                 <td className="px-3 py-2 text-neutral-400">{r.league}</td>
                 <td className="px-3 py-2 text-right">{r.contracts}</td>
                 <td className="px-3 py-2 text-right">{r.quoted}</td>

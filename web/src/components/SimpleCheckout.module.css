@@ -1,0 +1,154 @@
+.page { min-height: 100svh; background: #0a0a0a; color: #f5f5f5; font-size: 14px; }
+.page button, .page a, .page input { -webkit-tap-highlight-color: transparent; }
+.page button { cursor: pointer; }
+.page button:disabled { cursor: default; opacity: .3; }
+.page :is(button, a, input):focus-visible { outline: 2px solid #a3a3a3; outline-offset: 4px; }
+.icon { display: inline-block; flex: none; width: 20px; height: 20px; background: currentColor; mask: no-repeat center / contain; -webkit-mask: no-repeat center / contain; }
+.header { min-height: 64px; width: 100%; padding: 16px 40px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #262626; }
+.brand { display: flex; align-items: baseline; gap: 8px; font-size: 20px; font-weight: 600; text-decoration: none; color: inherit; }
+.brand span { font-size: 14px; font-weight: 400; color: #737373; }
+.demoLabel { border: 1px solid #333; border-radius: 5px; color: #a3a3a3; font-size: 11px; padding: 3px 7px; }
+.backLink { display: flex; align-items: center; gap: 8px; margin-left: auto; color: #a3a3a3; text-decoration: none; font-size: 12px; }
+.backLink:hover { color: #fff; }
+.backLink .icon { width: 14px; height: 14px; }
+.main { width: 100%; padding: 24px 40px 28px; }
+.pageHeading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.eyebrow { font-size: 10px; letter-spacing: .14em; color: #a3a3a3; margin: 0 0 8px; }
+.pageHeading h1 { font-size: 28px; line-height: 1.2; letter-spacing: -.03em; margin: 0; }
+.changeEvent { display: inline-flex; align-items: center; gap: 6px; color: #a3a3a3; font-size: 12px; min-height: 40px; text-decoration: none; }
+.changeEvent:hover { color: #fff; }
+.changeEvent .icon { width: 16px; height: 16px; }
+.eventHeading { display: flex; align-items: center; gap: 20px; padding: 20px; margin-bottom: 20px; background: #171717; border: 1px solid #262626; border-radius: 8px; }
+.eventHeading h2 { font-size: 23px; letter-spacing: -.025em; line-height: 1.3; margin: 3px 0 9px; }
+.eventHeading .muted { font-size: 12px; }
+.festivalMark { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; flex: none; color: #e8c99b; background: #2d261e; border-radius: 7px; }
+.festivalIcon { display: inline-block; width: 32px; height: 32px; background: currentColor; mask: no-repeat center / contain; -webkit-mask: no-repeat center / contain; transform: rotate(-15deg); }
+.eventMeta { display: flex; flex-wrap: wrap; gap: 4px 20px; color: #a3a3a3; margin: 0; font-size: 12px; }
+.muted { color: #a3a3a3; margin: 0; line-height: 1.6; }
+.checkoutGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 30%); gap: 24px; align-items: start; }
+.checkoutMain { display: grid; gap: 20px; min-width: 0; }
+.card { padding: 20px; border: 1px solid #262626; background: #171717; border-radius: 8px; }
+.ticketFieldset { border: 0; padding: 0; margin: 0; min-width: 0; width: 100%; }
+.sectionTitle { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; margin: 0 0 20px; padding: 0; width: 100%; }
+.step { display: inline-flex; align-items: center; justify-content: center; height: 24px; width: 24px; font-size: 11px; font-weight: 400; border: 1px solid #404040; border-radius: 50%; color: #a3a3a3; flex: none; }
+.tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tier { display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: start; gap: 12px 8px; padding: 14px 10px; border: 1px solid #333; border-radius: 6px; cursor: pointer; transition: border-color 120ms, background 120ms; }
+.tier:hover { border-color: #737373; }
+.selectedTier { background: #262626; border-color: #a3a3a3; }
+.tier input, .protection input { width: 16px; height: 16px; flex: none; accent-color: #e5e5e5; color-scheme: dark; cursor: pointer; }
+.tierCopy { display: grid; gap: 5px; min-width: 0; }
+.tierCopy strong { font-weight: 600; font-size: 13px; }
+.tierCopy > span { color: #a3a3a3; font-size: 11px; line-height: 1.4; }
+.tierPrice { grid-column: 2; white-space: nowrap; font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; }
+.tierPrice small { font-size: 10px; font-weight: 400; color: #a3a3a3; }
+.quantityRow { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; font-size: 12px; }
+.quantity { display: flex; align-items: center; border: 1px solid #404040; border-radius: 6px; }
+.quantity button { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; background: transparent; color: #f5f5f5; }
+.quantity button:hover:not(:disabled) { background: #262626; }
+.quantity .icon { width: 16px; height: 16px; }
+.quantity output { width: 24px; text-align: center; font-variant-numeric: tabular-nums; }
+.optional { margin-left: auto; color: #a3a3a3; font-size: 11px; font-weight: 400; }
+.protection { display: flex; align-items: center; gap: 12px; cursor: pointer; border-radius: 6px; border: 1px solid #333; padding: 14px; }
+.protection:hover { border-color: #737373; }
+.protectionSelected { border-color: #6ee7b7; background: #123025; }
+.noProtectionSelected { border-color: #a3a3a3; background: #262626; }
+.protectionOptions { display: grid; gap: 8px; }
+.protectionCopy { display: grid; gap: 5px; flex: 1; }
+.protectionCopy strong { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+.refundBadge { color: #6ee7b7; font-size: 10px; font-weight: 400; }
+.protectionCopy > span { font-size: 11px; color: #a3a3a3; line-height: 1.4; }
+.protectionPrice { display: grid; gap: 5px; text-align: right; white-space: nowrap; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
+.protectionPrice small { font-size: 10px; font-weight: 400; color: #a3a3a3; }
+.protectionDetail { display: flex; align-items: center; gap: 7px; color: #a3a3a3; font-size: 11px; line-height: 1.8; margin: 12px 0 0; }
+.protectionDetail .icon { color: #6ee7b7; width: 14px; height: 14px; }
+.summary { position: sticky; top: 24px; }
+.summary h2 { margin: 0 0 24px; font-size: 16px; }
+.orderEvent { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+.summary > .muted { font-size: 12px; }
+.priceLines { display: grid; gap: 14px; margin-top: 28px; font-size: 12px; color: #a3a3a3; font-variant-numeric: tabular-nums; }
+.priceLines > div, .confirmationReceipt > div { display: flex; justify-content: space-between; gap: 16px; }
+.priceLines > div > :last-child { color: #e5e5e5; }
+.priceLines .payout { font-size: 11px; }
+.priceLines .payout > :last-child { color: #6ee7b7; }
+.priceLines .total { color: #f5f5f5; font-size: 20px; border-top: 1px solid #333; padding-top: 18px; margin-top: 4px; }
+.finePrint { margin: 10px 0 0; color: #a3a3a3; font-size: 10px; line-height: 1.7; }
+.payment { display: flex; gap: 12px; align-items: center; margin: 26px 0 24px; padding: 14px 0; border-top: 1px solid #333; border-bottom: 1px solid #333; color: #a3a3a3; }
+.payment > div { display: grid; gap: 5px; font-size: 11px; }
+.payment strong { font-weight: 400; color: #d4d4d4; }
+.payment span { font-size: 10px; }
+.primary { display: flex; justify-content: center; align-items: center; gap: 10px; min-height: 46px; padding: 12px 20px; width: 100%; background: #f5f5f5; color: #171717; border: 0; border-radius: 6px; font: inherit; font-size: 13px; font-weight: 600; }
+.primary:hover { background: #d4d4d4; }
+.primary .icon { width: 16px; height: 16px; }
+.noCharge { display: flex; justify-content: center; align-items: center; gap: 6px; color: #a3a3a3; font-size: 10px; margin: 12px 0 0; }
+.noCharge .icon { width: 12px; height: 12px; }
+.footer { display: flex; justify-content: space-between; width: 100%; padding: 0 40px 28px; color: #737373; font-size: 11px; gap: 20px; }
+.confirmation { text-align: center; padding: 36px 24px; border: 1px solid #262626; background: #171717; border-radius: 8px; }
+.successMark { display: flex; justify-content: center; align-items: center; margin: 0 auto 20px; width: 48px; height: 48px; border-radius: 50%; background: #123025; color: #6ee7b7; }
+.confirmation h2 { font-size: 28px; letter-spacing: -.03em; margin: 0 0 10px; outline: none; }
+.confirmationReceipt { display: grid; gap: 16px; max-width: 360px; margin: 24px auto; padding: 20px; background: #0a0a0a; border-radius: 6px; text-align: left; font-size: 12px; color: #a3a3a3; }
+.confirmationReceipt strong { color: #f5f5f5; }
+.confirmationReceipt p { margin: 0; font-size: 11px; line-height: 1.7; }
+.confirmationActions { display: grid; justify-content: center; gap: 16px; max-width: 360px; margin: 24px auto 0; }
+.secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: none; border: 0; color: #a3a3a3; font: inherit; font-size: 12px; min-height: 40px; text-decoration: none; }
+.secondary:hover { color: #fff; }
+.secondary .icon { width: 14px; height: 14px; }
+.selectionMain { min-height: calc(100svh - 106px); padding-top: 36px; }
+.selectionIntro { color: #a3a3a3; margin: 12px 0 0; font-size: 13px; }
+.eventCards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 28px; }
+.eventCard { overflow: hidden; border: 1px solid #333; border-radius: 8px; background: #171717; color: inherit; text-decoration: none; }
+.eventCard:hover { border-color: #a3a3a3; }
+.eventArtwork { min-height: clamp(180px, 23vh, 300px); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 32px; border-bottom: 1px solid #333; }
+.eventArtwork > span:last-child { font-size: 10px; letter-spacing: .16em; }
+.festivalArtwork { background: #272119; color: #e8c99b; }
+.festivalArtwork .festivalIcon { width: 64px; height: 64px; }
+.nbaArtwork { background: #1c222b; color: #a3b1c5; }
+.nbaArtwork > span:first-child { transform: scale(1.25); }
+.eventCardBody { padding: 24px; }
+.eventCardBody h2 { font-size: 24px; letter-spacing: -.025em; margin: 4px 0 12px; }
+.eventCardDetails { font-size: 13px; line-height: 1.8; color: #a3a3a3; margin: 0; }
+.eventCardBottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-top: 1px solid #333; margin-top: 24px; padding-top: 20px; color: #a3a3a3; font-size: 12px; }
+.eventCardBottom strong { font-size: 20px; color: #f5f5f5; margin-left: 4px; }
+.eventCardBottom small { font-size: 11px; }
+.chooseTickets { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: #f5f5f5; }
+.chooseTickets .icon { width: 16px; height: 16px; }
+.selectionNote { display: flex; align-items: center; gap: 8px; margin-top: 24px; color: #a3a3a3; font-size: 12px; }
+.selectionNote .icon { color: #6ee7b7; width: 16px; height: 16px; }
+@media (max-width: 850px) {
+  .checkoutGrid { grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; }
+  .main { padding: 28px 24px 40px; }
+  .card { padding: 20px; }
+  .tiers { grid-template-columns: minmax(0, 1fr); }
+  .tier { display: flex; align-items: center; gap: 10px; padding: 12px; }
+  .tierPrice { margin-left: auto; }
+  .tierPrice small { display: none; }
+  .protection { flex-wrap: wrap; gap: 10px; }
+}
+@media (max-width: 680px) {
+  .header { min-height: 64px; padding: 16px 20px; gap: 12px; }
+  .backLink { font-size: 0; }
+  .backLink .icon { width: 18px; height: 18px; }
+  .main { padding: 28px 16px; }
+  .pageHeading { gap: 12px; }
+  .pageHeading h1 { font-size: 24px; }
+  .eyebrow { font-size: 9px; }
+  .checkoutGrid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .eventHeading { padding: 20px; gap: 14px; }
+  .eventHeading h2 { font-size: 20px; }
+  .eventMeta { font-size: 11px; }
+  .festivalMark { width: 56px; height: 64px; }
+  .eventHeading :global(.inline-flex) { gap: 4px; }
+  .eventHeading :global(.h-14) { height: 40px; width: 40px; }
+  .eventHeading :global(img) { width: 36px; height: 36px; }
+  .summary { position: static; }
+  .tierCopy > span { font-size: 11px; }
+  .tierPrice small { display: inline; }
+  .protectionCopy > span { display: block; }
+  .footer { padding: 0 20px 24px; font-size: 10px; }
+  .footer > span { white-space: nowrap; }
+  .eventCards { grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 24px; }
+  .eventCardBody { padding: 20px; }
+  .eventArtwork { min-height: 160px; }
+  .selectionNote { align-items: flex-start; line-height: 1.7; }
+  .selectionNote .icon { margin-top: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { .tier { transition: none; } }

@@ -15,6 +15,7 @@ export default async function Scanner() {
     volume: Number(e.volume ?? 0),
     start: e.startTime ?? e.expiryDate ?? "",
     live: !!e.isLive,
+    participants: e.participants,
   }));
   const cats = rows.reduce<Record<string, number>>((m, r) => ((m[r.league] = (m[r.league] ?? 0) + 1), m), {});
   return (

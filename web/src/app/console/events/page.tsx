@@ -4,6 +4,7 @@ import { getCatalog } from "@/lib/service";
 import { relatedMarkets, buildCoverages } from "@/lib/coverage";
 import { db } from "@/lib/store";
 import { dateParts } from "@/lib/format";
+import { EventMarks } from "@/components/TeamMarks";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function Events() {
           <tbody>
             {rows.map(({ ev, markets, covs, published }) => (
               <tr key={ev.id} className="border-t border-neutral-800 hover:bg-neutral-800/60">
-                <td className="px-4 py-3">{ev.title}{ev.custom && <span className="ml-2 rounded-md bg-neutral-700 px-1.5 py-0.5 text-neutral-200">New</span>}</td>
+                <td className="px-4 py-3"><div className="flex items-center gap-3"><EventMarks ev={ev} /><div>{ev.title}{ev.custom && <span className="ml-2 rounded-md bg-neutral-700 px-1.5 py-0.5 text-neutral-200">New</span>}</div></div></td>
                 <td className="px-4 py-3 text-neutral-400">{dateParts(ev.startTime).long}</td>
                 <td className="px-4 py-3">{markets}</td>
                 <td className="px-4 py-3">{covs}</td>

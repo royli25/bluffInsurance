@@ -13,6 +13,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import deployment from "./deployment.json";
+import { streamConfirmationRequired } from "../quicknode/config";
 
 /**
  * Arc (Circle's stablecoin L1) settlement layer.
@@ -24,11 +25,18 @@ export const arcChain = defineChain({
   id: deployment.chainId,
   name: "Arc Testnet",
   nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
-  rpcUrls: { default: { http: [process.env.ARC_RPC_URL ?? "https://rpc.testnet.arc.network"] } },
-  blockExplorers: { default: { name: "ArcScan", url: "https://testnet.arcscan.app" } },
+  rpcUrls: {
+    default: {
+      http: [process.env.ARC_RPC_URL ?? "https://rpc.testnet.arc.network"],
+    },
+  },
+  blockExplorers: {
+    default: { name: "ArcScan", url: "https://testnet.arcscan.app" },
+  },
 });
 
-const vaultAddress = (process.env.ARC_VAULT_ADDRESS ?? deployment.address) as Hex | null;
+const vaultAddress = (process.env.ARC_VAULT_ADDRESS ??
+  deployment.address) as Hex | null;
 export const arcMode = (): "live" | "simulated" =>
   process.env.ARC_OPERATOR_KEY && vaultAddress ? "live" : "simulated";
 
@@ -39,14 +47,17 @@ const usdc = (n: number) => parseUnits((n * ARC_SCALE).toFixed(6), 6);
 
 export interface ArcReceipt {
   mode: "live" | "simulated";
-  txHash: Hex;
-  explorerUrl: string;
+  // A persisted purchase intent has no transaction hash until submission or
+  // an independently observed PolicyPurchased event supplies one.
+  txHash?: Hex;
+  explorerUrl?: string;
   policyIdHex?: Hex;
   marketRefHex?: Hex;
 }
 
 const fakeTx = (): Hex => `0x${crypto.randomBytes(32).toString("hex")}`;
-const explorer = (tx: string) => `${arcChain.blockExplorers.default.url}/tx/${tx}`;
+const explorer = (tx: string) =>
+  `${arcChain.blockExplorers.default.url}/tx/${tx}`;
 
 function clients() {
   const account = privateKeyToAccount(process.env.ARC_OPERATOR_KEY as Hex);
@@ -71,7 +82,13 @@ export async function recordPolicyOnArc(p: {
   const marketRefHex = toBytes32(p.marketRef);
   if (arcMode() === "simulated") {
     const tx = fakeTx();
-    return { mode: "simulated", txHash: tx, explorerUrl: explorer(tx), policyIdHex, marketRefHex };
+    return {
+      mode: "simulated",
+      txHash: tx,
+      explorerUrl: explorer(tx),
+      policyIdHex,
+      marketRefHex,
+    };
   }
   const { account, pub, wallet } = clients();
   const holder = p.holder ?? account.address; // custodial wallet per fan in prod
@@ -81,30 +98,77 @@ export async function recordPolicyOnArc(p: {
     functionName: "approve",
     args: [vaultAddress!, usdc(p.premium)],
   });
-  await pub.waitForTransactionReceipt({ hash: approve });
+  if (
+    (await pub.waitForTransactionReceipt({ hash: approve })).status !==
+    "success"
+  )
+    throw new Error("Arc premium approval reverted");
   const tx = await wallet.writeContract({
     address: vaultAddress!,
     abi: deployment.abi,
     functionName: "purchasePolicy",
-    args: [policyIdHex, holder, usdc(p.premium), usdc(p.payout), marketRefHex, p.trigger, BigInt(Math.floor(p.expiry.getTime() / 1000))],
+    args: [
+      policyIdHex,
+      holder,
+      usdc(p.premium),
+      usdc(p.payout),
+      marketRefHex,
+      p.trigger,
+      BigInt(Math.floor(p.expiry.getTime() / 1000)),
+    ],
   });
-  await pub.waitForTransactionReceipt({ hash: tx });
-  return { mode: "live", txHash: tx, explorerUrl: explorer(tx), policyIdHex, marketRefHex };
+  // The Stream is the confirmation source. Return the submitted hash promptly;
+  // a reverted transaction emits no purchase event and cannot activate a policy.
+  if (
+    !streamConfirmationRequired("live") &&
+    (await pub.waitForTransactionReceipt({ hash: tx })).status !== "success"
+  )
+    throw new Error("Arc purchase reverted");
+  return {
+    mode: "live",
+    txHash: tx,
+    explorerUrl: explorer(tx),
+    policyIdHex,
+    marketRefHex,
+  };
 }
 
-export async function settleOnArc(marketRef: string, triggered: boolean, policyIds: string[], hedgeProceeds: number, totalPayout = 0): Promise<ArcReceipt> {
+export async function settleOnArc(
+  marketRef: string,
+  triggered: boolean,
+  policyIds: string[],
+  hedgeProceeds: number,
+  totalPayout = 0,
+): Promise<ArcReceipt> {
   if (arcMode() === "simulated") {
     const tx = fakeTx();
-    return { mode: "simulated", txHash: tx, explorerUrl: explorer(tx), marketRefHex: toBytes32(marketRef) };
+    return {
+      mode: "simulated",
+      txHash: tx,
+      explorerUrl: explorer(tx),
+      marketRefHex: toBytes32(marketRef),
+    };
   }
   const { pub, wallet } = clients();
   // Hedge proceeds land in the vault; for proxy (partial) hedges the Bluff reserve tops up the residual.
   const deposit = Math.max(hedgeProceeds, totalPayout);
   if (triggered && deposit > 0) {
-    const a = await wallet.writeContract({ address: deployment.usdc as Hex, abi: erc20Abi, functionName: "approve", args: [vaultAddress!, usdc(deposit)] });
-    await pub.waitForTransactionReceipt({ hash: a });
-    const d = await wallet.writeContract({ address: vaultAddress!, abi: deployment.abi, functionName: "depositHedgeProceeds", args: [usdc(deposit), toBytes32(marketRef)] });
-    await pub.waitForTransactionReceipt({ hash: d });
+    const a = await wallet.writeContract({
+      address: deployment.usdc as Hex,
+      abi: erc20Abi,
+      functionName: "approve",
+      args: [vaultAddress!, usdc(deposit)],
+    });
+    if ((await pub.waitForTransactionReceipt({ hash: a })).status !== "success")
+      throw new Error("Arc proceeds approval reverted");
+    const d = await wallet.writeContract({
+      address: vaultAddress!,
+      abi: deployment.abi,
+      functionName: "depositHedgeProceeds",
+      args: [usdc(deposit), toBytes32(marketRef)],
+    });
+    if ((await pub.waitForTransactionReceipt({ hash: d })).status !== "success")
+      throw new Error("Arc proceeds deposit reverted");
   }
   const tx = await wallet.writeContract({
     address: vaultAddress!,
@@ -112,6 +176,15 @@ export async function settleOnArc(marketRef: string, triggered: boolean, policyI
     functionName: "settleMarket",
     args: [toBytes32(marketRef), triggered, policyIds.map(toBytes32)],
   });
-  await pub.waitForTransactionReceipt({ hash: tx });
-  return { mode: "live", txHash: tx, explorerUrl: explorer(tx), marketRefHex: toBytes32(marketRef) };
+  if (
+    !streamConfirmationRequired("live") &&
+    (await pub.waitForTransactionReceipt({ hash: tx })).status !== "success"
+  )
+    throw new Error("Arc settlement reverted");
+  return {
+    mode: "live",
+    txHash: tx,
+    explorerUrl: explorer(tx),
+    marketRefHex: toBytes32(marketRef),
+  };
 }

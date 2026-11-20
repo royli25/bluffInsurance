@@ -15,7 +15,11 @@ export default async function Home() {
           <p className="max-w-2xl text-neutral-400">Every policy is hedged on Gemini prediction markets and settled in USDC on Arc. {universe.events.length.toLocaleString()} markets and {contracts.toLocaleString()} contracts indexed right now.</p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Link href="/demo" className="space-y-2 rounded-lg bg-neutral-900 p-6 hover:bg-neutral-800">
+            <div className="text-xl font-semibold">Simple checkout</div>
+            <p className="text-neutral-400">Pick a pass or a seat, add Bluff Protect, and go. Festival and NBA demos.</p>
+          </Link>
           <Link href="/seatwise" className="space-y-2 rounded-lg bg-neutral-900 p-6 hover:bg-neutral-800">
             <div className="text-xl font-semibold">Storefront</div>
             <p className="text-neutral-400">The fan side. A ticketing checkout with Bluff Protect built in, across {catalog.length} live events.</p>

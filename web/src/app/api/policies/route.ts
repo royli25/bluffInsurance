@@ -18,7 +18,10 @@ export async function POST(req: Request) {
       holderName: body.holderName ?? "Guest",
       holderEmail: body.holderEmail ?? "guest@example.com",
     });
-    return NextResponse.json({ policy });
+    return NextResponse.json(
+      { policy },
+      { status: policy.status === "pending" ? 202 : 200 },
+    );
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
